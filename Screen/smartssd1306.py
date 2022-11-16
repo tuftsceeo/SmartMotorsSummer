@@ -169,11 +169,11 @@ class SSD1306_SMART(SSD1306_I2C):
             for x in range(self.scale*point[0], self.scale*(point[0] + 1)):
                 self.pixel(x, y, 1)
 
-    def circle(self, point):
+    def circle(self, point):                           # not currently fast enough
         def dist(x1, y1, x2, y2):
             from math import sqrt
             return sqrt((x2 - x1)**2 + (y2 - y1)**2)
-        Xl = self.scale * point[0] 
+        Xl = self.scale * point[0]
         Xh = self.scale * (point[0] + 1)
         Xc = (Xl + Xh - 1)/2
         Yl = self.scale * point[1]
@@ -183,6 +183,53 @@ class SSD1306_SMART(SSD1306_I2C):
             for x in range(Xl, Xh):
                 if dist(x, y, Xc, Yc) <= self.scale * 51/100:
                     self.pixel(x, y, 1)
+                    self.show()                          # This line makes it even slower and would be removed.
+
+    def hline(self, *args):
+        if len(args) == 3:
+            x, y, length = args
+            for i in range(x, x + length):
+                display.pixel(i, y, 1)
+        if len(args) == 4:
+            x1, y1, x2, y2 = args
+            def f(x):
+                return int((y2-y1)/(x2-x1)*(x-x1) + y1)
+            for i in range(x1, x2):
+                display.pixel(i, f(i), 1)
+        return None
+
+    def vline(self, *args):
+        if len(args) == 3:
+            x, y, length = args
+            for j in range(y, y + length):
+                display.pixel(x, j, 1)
+        if len(args) == 4:
+            x1, y1, x2, y2 = args
+            def f(y):
+                return int((x2-x1)/(y2-y1)*(y-y1) + x1)
+            for j in range(y1, y2):
+                display.pixel(f(j), j, 1)
+        return None
+
+    def hplot(self, *args):
+        if len(args) == 1:
+            f = args[0]
+            for i in range(self.width):
+                try:
+                    display.pixel(i, int(f(i)), 1)
+                except (ValueError, ZeroDivisionError):
+                    pass
+        return None
+
+    def vplot(self, *args):
+        if len(args) == 1:
+            f = args[0]
+            for j in range(self.height):
+                try:
+                    display.pixel(int(f(j)), j, 1)
+                except (ValueError, ZeroDivisionError):
+                    pass
+        return None
 
     def update(self, points, point):
         self.fill(0)
