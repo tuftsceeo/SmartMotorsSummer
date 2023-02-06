@@ -96,7 +96,7 @@ class SSD1306(framebuf.FrameBuffer):
             x0 += 32
             x1 += 32
         self.write_cmd(SET_COL_ADDR)
-        self.write_cmd(x0)3
+        self.write_cmd(x0)
         self.write_cmd(x1)
         self.write_cmd(SET_PAGE_ADDR)
         self.write_cmd(0)
