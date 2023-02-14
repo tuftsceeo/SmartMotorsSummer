@@ -159,10 +159,69 @@ class SSD1306_SPI(SSD1306):
 
 class SSD1306_SMART(SSD1306_I2C):
 #class SSD1306_SMART(ssd1306.SSD1306_I2C):
-    def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False, scale = 8, mode = 0):
+    def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False, scale = 8, mode = 0, plotsize = [[3,3],[100,60]]):
         self.scale = scale
         self.mode = mode # 0 for learn, 1 for repeat
+        self.plotsize = plotsize
         super().__init__(width, height, i2c, addr = 0x3C, external_vcc = external_vcc)
+
+    def plotpoint(self, *args):
+        if len(args) == 1:
+            x, y = args[0]
+        elif len(args) == 2:
+            x, y = args
+        else:
+            return None
+        # The lower left point on the screen is [3,3]
+        # The upper left point on the screen should be [3,60]
+        for i in range(x - 1, x + 1):
+            for j in range(y - 1, y + 1):
+                self.pixel(i, j, 1)
+
+    def hline(self, *args):
+        if len(args) == 3:
+            x, y, length = args
+            for i in range(x, x + length):
+                self.pixel(i, y, 1)
+        if len(args) == 4:
+            x1, y1, x2, y2 = args
+            def f(x):
+                return int((y2-y1)/(x2-x1)*(x-x1) + y1)
+            for i in range(x1, x2):
+                self.pixel(i, f(i), 1)
+        return None
+
+    def vline(self, *args):
+        if len(args) == 3:
+            x, y, length = args
+            for j in range(y, y + length):
+                self.pixel(x, j, 1)
+        if len(args) == 4:
+            x1, y1, x2, y2 = args
+            def f(y):
+                return int((x2-x1)/(y2-y1)*(y-y1) + x1)
+            for j in range(y1, y2):
+                self.pixel(f(j), j, 1)
+        return None
+
+    def box(self, *args):
+        if len(args) == 1:
+            x, y = args[0]
+        elif len(args) == 2:
+            x, y = args
+        else:
+            return None
+        #bottom
+        self.hline(x - 3, y - 3, 6)
+        #left
+        self.vline(x - 3, y - 2, 6)
+        #top
+        self.hline(x - 2, y + 3, 6)
+        #right
+        self.vline(x + 3, y - 3, 6)
+
+
+
 
     def square(self, point):
         for y in range(self.scale*point[1], self.scale*(point[1] + 1)):
@@ -185,31 +244,7 @@ class SSD1306_SMART(SSD1306_I2C):
                     self.pixel(x, y, 1)
                     self.show()                          # This line makes it even slower and would be removed.
 
-    def hline(self, *args):
-        if len(args) == 3:
-            x, y, length = args
-            for i in range(x, x + length):
-                display.pixel(i, y, 1)
-        if len(args) == 4:
-            x1, y1, x2, y2 = args
-            def f(x):
-                return int((y2-y1)/(x2-x1)*(x-x1) + y1)
-            for i in range(x1, x2):
-                display.pixel(i, f(i), 1)
-        return None
 
-    def vline(self, *args):
-        if len(args) == 3:
-            x, y, length = args
-            for j in range(y, y + length):
-                display.pixel(x, j, 1)
-        if len(args) == 4:
-            x1, y1, x2, y2 = args
-            def f(y):
-                return int((x2-x1)/(y2-y1)*(y-y1) + x1)
-            for j in range(y1, y2):
-                display.pixel(f(j), j, 1)
-        return None
 
     def hplot(self, *args):
         if len(args) == 1:
