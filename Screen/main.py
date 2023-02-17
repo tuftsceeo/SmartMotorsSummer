@@ -35,9 +35,21 @@
 #i2c = I2C(sda = Pin(4), scl = Pin(5))
 #display = ssd1306.SSD1306_I2C(128, 64, i2c)
 
+#from random import getrandbits
+from machine import Pin, SoftI2C, PWM, ADC
+import time
+import ssd1306
+
+i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
+display = ssd1306.SSD1306_I2C(128, 64, i2c)
+
+display.text("hello", 0, 0, 1)
+display.show()
+
+
+
 from time import sleep
 from random import getrandbits
-
 from machine import Pin, I2C
 import aengussd1306
 i2c = I2C(sda = Pin(4), scl = Pin(5))

@@ -1,0 +1,40 @@
+Thonny is another serial tool if Arduino doesn't work
+
+display.text('edit', 118-8*4, 12, 0)
+display.text('train', 118-8*5, 28, 0)
+display.text('test', 118-8*4, 44, 0)
+
+
+
+display.text('edit', 126-8*4, 12, 1)
+display.text('train', 126-8*5, 28, 1)
+display.text('test', 126-8*4, 44, 1)
+
+for i in range(21, 25):
+	for j in range(21, 25):
+		display.pixel(i, j, 1)
+
+
+    def plotpoint(self, *args):
+        if len(args) == 1:
+            x, y = args[0]
+        elif len(args) == 2:
+            x, y = args
+        else:
+            return None
+        # The lower left point on the screen is [3,3]
+        # The upper left point on the screen should be [3,60]
+        for i in range(x - 1, x + 1):
+            for j in range(y - 1, y + 1):
+                self.pixel(i, j, 1)
+def plotpoint(x,y):
+	for i in range(x - 1, x + 4):
+	    for j in range(y - 1, y + 4):
+	        display.pixel(i, j, 1)
+
+putting text at y = 12, 28, 44 leaves three evenly spaced lines
+putting text at x = 126 minus 8 for each letter leavs two pixels to the right
+If the longest word is 5 letters at x - 86, 
+then the plotting canvas has space from [0,0] to [85,63]
+[3, 3]
+[82, 60]

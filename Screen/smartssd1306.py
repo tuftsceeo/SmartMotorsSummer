@@ -204,7 +204,7 @@ class SSD1306_SMART(SSD1306_I2C):
                 self.pixel(f(j), j, 1)
         return None
 
-    def box(self, *args):
+    def box7(self, *args):
         if len(args) == 1:
             x, y = args[0]
         elif len(args) == 2:
@@ -220,29 +220,28 @@ class SSD1306_SMART(SSD1306_I2C):
         #right
         self.vline(x + 3, y - 3, 6)
 
+    def box9(self,*args):
+        if len(args) == 1:
+            x, y = args[0]
+        elif len(args) == 2:
+            x, y = args
+        else:
+            return None
+        #bottom
+        self.hline(x - 4, y - 4, 8)
+        #left
+        self.vline(x - 4, y - 3, 8)
+        #top
+        self.hline(x - 3, y + 4, 8)
+        #right
+        self.vline(x + 4, y - 4, 8)
+
+    def writewords(self):
+        self.text('edit', 126-8*4, 12, 1)
+        self.text('train', 126-8*5, 28, 1)
+        self.text('test', 126-8*4, 44, 1)
 
 
-
-    def square(self, point):
-        for y in range(self.scale*point[1], self.scale*(point[1] + 1)):
-            for x in range(self.scale*point[0], self.scale*(point[0] + 1)):
-                self.pixel(x, y, 1)
-
-    def circle(self, point):                           # not currently fast enough
-        def dist(x1, y1, x2, y2):
-            from math import sqrt
-            return sqrt((x2 - x1)**2 + (y2 - y1)**2)
-        Xl = self.scale * point[0]
-        Xh = self.scale * (point[0] + 1)
-        Xc = (Xl + Xh - 1)/2
-        Yl = self.scale * point[1]
-        Yh = self.scale * (point[1] + 1)
-        Yc = (Yl + Yh - 1)/2
-        for y in range(Yl, Yh):
-            for x in range(Xl, Xh):
-                if dist(x, y, Xc, Yc) <= self.scale * 51/100:
-                    self.pixel(x, y, 1)
-                    self.show()                          # This line makes it even slower and would be removed.
 
 
 
@@ -265,28 +264,3 @@ class SSD1306_SMART(SSD1306_I2C):
                 except (ValueError, ZeroDivisionError):
                     pass
         return None
-
-    def update(self, points, point):
-        self.fill(0)
-        for i in points:
-            self.square(i)
-        try:
-            j = point[1]
-            self.square(point)
-        except IndexError:
-            pass
-
-        if self.mode == 0:
-            self.text('l', 112, 8, 1)
-            self.text('e', 112, 16, 1)
-            self.text('a', 112, 24, 1)
-            self.text('r', 112, 32, 1)
-            self.text('n', 112, 40, 1)
-        elif self.mode == 1:
-            self.text('r', 112, 8, 1)
-            self.text('e', 112, 16, 1)
-            self.text('p', 112, 24, 1)
-            self.text('e', 112, 32, 1)
-            self.text('a', 112, 40, 1)
-            self.text('t', 112, 48, 1)
-        self.show()
