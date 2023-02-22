@@ -1,7 +1,6 @@
 # COM speed 115200
 # with SCL in D1 and SDA in D2
-# desktop COM9
-# laptop  COM11
+
 
 
 # SSD1306 GUIDE
@@ -15,79 +14,62 @@
 #display.hline(0, 8, 4, 1) # not working
 #display.rect(10, 10, 107, 43, 1) # not working
 
-# OTHER TOOLS GUIDE
-#import os
-#os.remove("main.py")
-#os.listdir()
-#f = open("main.py", "w")
-#f.write(a)
-#f.close()
-#hit control D to restart the board.
-
-
-#no longer needed:
-#import framebuf
-#import ssd1306
-
-
-#from machine import Pin, I2C
-#import ssd1306
-#i2c = I2C(sda = Pin(4), scl = Pin(5))
-#display = ssd1306.SSD1306_I2C(128, 64, i2c)
-
-#from random import getrandbits
 from machine import Pin, SoftI2C, PWM, ADC
 import time
-import ssd1306
+import smartssd1306
 
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
-display = ssd1306.SSD1306_I2C(128, 64, i2c)
+display = smartssd1306.SSD1306_SMART(128, 64, i2c)
 
-display.text("hello", 0, 0, 1)
-display.show()
-
-
-
-from time import sleep
-from random import getrandbits
-from machine import Pin, I2C
-import aengussd1306
-i2c = I2C(sda = Pin(4), scl = Pin(5))
-#screen = SSD1306_I2C(128, 64, i2c)
-#display = SSD1306_SMART(128, 64, i2c, scale = 8)
-display = aengussd1306.SSD1306_SMART(128, 64, i2c, scale = 8)
-
-
-def changepointrandomly(point, scale):
-	if(getrandbits(1)):
-		if(getrandbits(1) and point[0] < 128/scale - 1):
-			return [point[0] + 1, point[1]]
-		elif(point[0] > 0):
-			return [point[0] - 1, point[1]]
-	else:
-		if(getrandbits(1) and point[1] < 64/scale - 4): # used to be 64/scale - 1, but was changed to - 4 because of the 'learn' text
-			return[point[0], point[1] + 1]
-		elif(point[1] > 0):
-			return[point[0], point[1] - 1]
-	return point
-
-
-
+mode = 2
+point = [9,9]
 points = []
-point = [0,0]
+
+def writeall():
+# plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
+    display.fill(0)
+    display.writewords(mode)
+    display.rectangle((0, 0), (82, 63))
+    
+    display.box7(point)
+    for i in points:
+        display.plot3(i)
+
+    display.show()
+
 
 
 while(True):
-	point = changepointrandomly(point, display.scale)
-	display.update(points, point)
-	if(getrandbits(3) == 0):
-		test = [i[0] for i in points]
-		if(not point[0] in test):
-			points.append(point)
-
-
-	sleep(getrandbits(2)/6)
-	if(getrandbits(7) == 0):
-		display.mode = 1
-		display.update(points, [])
-		break
+    for i in range(8):
+        point[0] += 2*i
+        writeall()
+    
+    points.append(list(point))
+    for i in range(8):
+        point[0] -= 2*i
+        point[1] += 5
+        writeall()
+    points.append(list(point))
+    
+    for i in range(8):
+        point[1] -= 5
+        writeall()
+    points.append(list(point))
+        
+    for i in range(10):
+        point[0] += 5
+        point[1] +=4
+        writeall()
+    points.append(list(point))
+        
+    for i in range(10):
+        point[0] -= 5
+        point[1] -=4
+        writeall()
+    points.append(list(point))
+    
+    for i in (3, 1, 2):
+        mode = i
+        writeall()
+        time.sleep(0.3)
+    

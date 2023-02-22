@@ -7,8 +7,16 @@ from micropython import const
 import framebuf
 
 
+
+
+
+
+
 # register definitions
 SET_CONTRAST = const(0x81)
+
+
+
 SET_ENTIRE_ON = const(0xA4)
 SET_NORM_INV = const(0xA6)
 SET_DISP = const(0xAE)
@@ -22,6 +30,9 @@ SET_COM_OUT_DIR = const(0xC0)
 SET_DISP_OFFSET = const(0xD3)
 SET_COM_PIN_CFG = const(0xDA)
 SET_DISP_CLK_DIV = const(0xD5)
+
+
+
 SET_PRECHARGE = const(0xD9)
 SET_VCOM_DESEL = const(0xDB)
 SET_CHARGE_PUMP = const(0x8D)
@@ -46,14 +57,17 @@ class SSD1306(framebuf.FrameBuffer):
             0x00,  # horizontal
             # resolution and layout
             SET_DISP_START_LINE | 0x00,
+
             SET_SEG_REMAP | 0x01,  # column addr 127 mapped to SEG0
             SET_MUX_RATIO,
             self.height - 1,
             SET_COM_OUT_DIR | 0x08,  # scan from COM[N] to COM0
+
             SET_DISP_OFFSET,
             0x00,
             SET_COM_PIN_CFG,
             0x02 if self.width > 2 * self.height else 0x12,
+
             # timing and driving scheme
             SET_DISP_CLK_DIV,
             0x80,
@@ -62,15 +76,21 @@ class SSD1306(framebuf.FrameBuffer):
             SET_VCOM_DESEL,
             0x30,  # 0.83*Vcc
             # display
+
+
             SET_CONTRAST,
             0xFF,  # maximum
             SET_ENTIRE_ON,  # output follows RAM contents
             SET_NORM_INV,  # not inverted
             # charge pump
+
+
             SET_CHARGE_PUMP,
             0x10 if self.external_vcc else 0x14,
             SET_DISP | 0x01,
         ):  # on
+
+
             self.write_cmd(cmd)
         self.fill(0)
         self.show()
@@ -85,6 +105,9 @@ class SSD1306(framebuf.FrameBuffer):
         self.write_cmd(SET_CONTRAST)
         self.write_cmd(contrast)
 
+
+
+
     def invert(self, invert):
         self.write_cmd(SET_NORM_INV | (invert & 1))
 
@@ -96,11 +119,14 @@ class SSD1306(framebuf.FrameBuffer):
             x0 += 32
             x1 += 32
         self.write_cmd(SET_COL_ADDR)
-        self.write_cmd(x0)3
+        self.write_cmd(x0)
         self.write_cmd(x1)
         self.write_cmd(SET_PAGE_ADDR)
         self.write_cmd(0)
+
         self.write_cmd(self.pages - 1)
+
+
         self.write_data(self.buffer)
 
 
@@ -109,13 +135,16 @@ class SSD1306_I2C(SSD1306):
         self.i2c = i2c
         self.addr = addr
         self.temp = bytearray(2)
-        self.write_list = [b"\x40", None]  # Co=0, D/C#=1
+        self.write_list = [b"@", None]  # Co=0, D/C#=1
         super().__init__(width, height, external_vcc)
+
 
     def write_cmd(self, cmd):
         self.temp[0] = 0x80  # Co=1, D/C#=0
         self.temp[1] = cmd
+
         self.i2c.writeto(self.addr, self.temp)
+
 
     def write_data(self, buf):
         self.write_list[1] = buf
@@ -123,14 +152,17 @@ class SSD1306_I2C(SSD1306):
 
 
 class SSD1306_SPI(SSD1306):
+
     def __init__(self, width, height, spi, dc, res, cs, external_vcc=False):
         self.rate = 10 * 1024 * 1024
         dc.init(dc.OUT, value=0)
         res.init(res.OUT, value=0)
+
         cs.init(cs.OUT, value=1)
         self.spi = spi
         self.dc = dc
         self.res = res
+
         self.cs = cs
         import time
 
@@ -140,6 +172,7 @@ class SSD1306_SPI(SSD1306):
         time.sleep_ms(10)
         self.res(1)
         super().__init__(width, height, external_vcc)
+
 
     def write_cmd(self, cmd):
         self.spi.init(baudrate=self.rate, polarity=0, phase=0)
@@ -157,6 +190,7 @@ class SSD1306_SPI(SSD1306):
         self.spi.write(buf)
         self.cs(1)
 
+
 class SSD1306_SMART(SSD1306_I2C):
 #class SSD1306_SMART(ssd1306.SSD1306_I2C):
     def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False, scale = 8, mode = 0, plotsize = [[3,3],[100,60]]):
@@ -165,20 +199,8 @@ class SSD1306_SMART(SSD1306_I2C):
         self.plotsize = plotsize
         super().__init__(width, height, i2c, addr = 0x3C, external_vcc = external_vcc)
 
-    def plotpoint(self, *args):
-        if len(args) == 1:
-            x, y = args[0]
-        elif len(args) == 2:
-            x, y = args
-        else:
-            return None
-        # The lower left point on the screen is [3,3]
-        # The upper left point on the screen should be [3,60]
-        for i in range(x - 1, x + 1):
-            for j in range(y - 1, y + 1):
-                self.pixel(i, j, 1)
-
     def hline(self, *args):
+
         if len(args) == 3:
             x, y, length = args
             for i in range(x, x + length):
@@ -187,59 +209,99 @@ class SSD1306_SMART(SSD1306_I2C):
             x1, y1, x2, y2 = args
             def f(x):
                 return int((y2-y1)/(x2-x1)*(x-x1) + y1)
-            for i in range(x1, x2):
+            for i in range(x1, x2 + 1):
+
                 self.pixel(i, f(i), 1)
+
         return None
 
     def vline(self, *args):
         if len(args) == 3:
+
             x, y, length = args
             for j in range(y, y + length):
                 self.pixel(x, j, 1)
         if len(args) == 4:
             x1, y1, x2, y2 = args
             def f(y):
+
                 return int((x2-x1)/(y2-y1)*(y-y1) + x1)
-            for j in range(y1, y2):
+            for j in range(y1, y2 + 1):
                 self.pixel(f(j), j, 1)
+
         return None
+
+
+        
+    def rectangle(self, *args):
+        if len(args) == 2:
+            x1, y1, x2, y2 = args[0][0], args[0][1], args [1][0], args[1][1]
+        if len(args) == 4:
+            x1, y1, x2, y2 = args[0], args[1], args[2], args[3]
+        self.hline(x1, y1, x2, y1)
+        self.hline(x1, y2, x2, y2)
+        self.vline(x1, y1 + 1, x1, y2 - 1)
+        self.vline(x2, y1 + 1, x2, y2 - 1)
+    
+    def filled(self, *args):
+        if len(args) == 2:
+            x1, y1, x2, y2 = args[0][0], args[0][1], args [1][0], args[1][1]
+        elif len(args) == 4:
+            x1, y1, x2, y2 = args
+
+        else:
+            return None
+        for i in range(x1, x2 + 1):
+            for j in range(y1, y2 + 1):
+                self.pixel(i, j, 1)
 
     def box7(self, *args):
         if len(args) == 1:
             x, y = args[0]
         elif len(args) == 2:
             x, y = args
-        else:
-            return None
-        #bottom
-        self.hline(x - 3, y - 3, 6)
-        #left
-        self.vline(x - 3, y - 2, 6)
-        #top
-        self.hline(x - 2, y + 3, 6)
-        #right
-        self.vline(x + 3, y - 3, 6)
+        self.rectangle((x - 3, y - 3), (x + 3, y + 3))
 
     def box9(self,*args):
         if len(args) == 1:
             x, y = args[0]
         elif len(args) == 2:
             x, y = args
-        else:
-            return None
-        #bottom
-        self.hline(x - 4, y - 4, 8)
-        #left
-        self.vline(x - 4, y - 3, 8)
-        #top
-        self.hline(x - 3, y + 4, 8)
-        #right
-        self.vline(x + 4, y - 4, 8)
+        self.rectangle((x - 4, y - 4), (x + 4, y + 4))
+    
+    def plot3(self, *args):
+        if len(args) == 1:
+            x, y = args[0]
+        elif len(args) == 2:
+            x, y = args
+        self.filled((x - 1, y - 1), (x + 1, y + 1))
+    
+    def plot5(self, *args):
+        if len(args) == 1:
+            x, y = args[0]
+        elif len(args) == 2:
+            x, y = args
+        self.filled((x - 2, y - 2), (x + 2, y + 2))
 
-    def writewords(self):
+    
+        
+    def writewords(self, mode):
         self.text('edit', 126-8*4, 12, 1)
         self.text('train', 126-8*5, 28, 1)
         self.text('test', 126-8*4, 44, 1)
+        if mode == 1:
+            self.rectangle((124 - 8*4, 10), (127, 21))
+        if mode == 2:
+            self.rectangle((124 - 8*5, 26), (127, 37))
+        if mode == 3:
+
+            self.rectangle((124 - 8*4, 42), (127, 53))
+        
+        # x from (123 - 8 * letters) to 127
+        # y values: 10 to 21
+        #           26 to 37
+        #           42 to 53
+
 
 
 
@@ -247,6 +309,7 @@ class SSD1306_SMART(SSD1306_I2C):
 
     def hplot(self, *args):
         if len(args) == 1:
+
             f = args[0]
             for i in range(self.width):
                 try:
@@ -258,8 +321,10 @@ class SSD1306_SMART(SSD1306_I2C):
     def vplot(self, *args):
         if len(args) == 1:
             f = args[0]
+
             for j in range(self.height):
                 try:
+
                     display.pixel(int(f(j)), j, 1)
                 except (ValueError, ZeroDivisionError):
                     pass
