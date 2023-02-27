@@ -1,13 +1,12 @@
 # COM speed 115200
 # with SCL in D1 and SDA in D2
 
-
-
 # SSD1306 GUIDE
 #display.contrast(255)
 #display.text('Hello, World!', 0, 0, 1)
 #display.pixel(0, 0, 1)
 #display.pixel(127, 63, 1)
+
 #display.show()
 #display.fill(0)
 #display.show()
@@ -16,60 +15,65 @@
 
 from machine import Pin, SoftI2C, PWM, ADC
 import time
-import smartssd1306
+import smarttools
 
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
-display = smartssd1306.SSD1306_SMART(128, 64, i2c)
+display = smarttools.SSD1306_SMART(128, 64, i2c)
+
+
+bleft = smarttools.BUTTON(9)
+bcenter = smarttools.BUTTON(10)
+bright = smarttools.BUTTON(8)
+
+
+
+# pot pin GPIO3, A1, D1
+pot = ADC(Pin(3))
+pot.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
+# pot.read() returns integers in [0, 4095]
+
+# light pin GPIO5
+light = ADC(Pin(5))
+light.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
+
+# plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
+ranges = {'pot': [0, 4095], 'light': [0, 4095], 'screenx': [4, 78], 'screeny': [59, 4]} # screeny is backwards because it is from top to bottom
+def transform(initial, final, value):
+    initial = ranges[initial]
+    final = ranges[final]
+    return int((final[1]-final[0]) / (initial[1]-initial[0]) * (value - initial[0]) + final[0])
 
 mode = 2
 point = [9,9]
 points = []
 
-def writeall():
-# plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
-    display.fill(0)
-    display.writewords(mode)
-    display.rectangle((0, 0), (82, 63))
-    
-    display.box7(point)
-    for i in points:
-        display.plot3(i)
 
-    display.show()
+
+
+#buttoncenter = button(10, holdthreshold = 10)
+while(False):
+    bleft.update()
+    bcenter.update()
+    bright.update()
+
+    
+    
+    print([[bleft.tapped, bleft.held], [bcenter.tapped, bcenter.held], [bright.tapped, bright.held]])
+
+    time.sleep(0.05)
+
 
 
 
 while(True):
-    for i in range(8):
-        point[0] += 2*i
-        writeall()
-    
-    points.append(list(point))
-    for i in range(8):
-        point[0] -= 2*i
-        point[1] += 5
-        writeall()
-    points.append(list(point))
-    
-    for i in range(8):
-        point[1] -= 5
-        writeall()
-    points.append(list(point))
-        
-    for i in range(10):
-        point[0] += 5
-        point[1] +=4
-        writeall()
-    points.append(list(point))
-        
-    for i in range(10):
-        point[0] -= 5
-        point[1] -=4
-        writeall()
-    points.append(list(point))
-    
-    for i in (3, 1, 2):
-        mode = i
-        writeall()
-        time.sleep(0.3)
-    
+    bleft.update()
+    bcenter.update()
+    bright.update()
+
+    point = [transform('light', 'screenx', pot.read()), transform('pot', 'screeny', light.read())]
+    if bcenter.tapped:
+        points.append(list(point))
+    if bcenter.held:
+        points.append([point[0] - 15, point[1] - 15])
+
+    display.writeall(point, points, mode = mode)
