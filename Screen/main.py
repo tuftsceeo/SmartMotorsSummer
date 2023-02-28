@@ -16,6 +16,7 @@
 from machine import Pin, SoftI2C, PWM, ADC
 import time
 import smarttools
+import servo
 
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 display = smarttools.SSD1306_SMART(128, 64, i2c)
@@ -25,7 +26,7 @@ bleft = smarttools.BUTTON(9)
 bcenter = smarttools.BUTTON(10)
 bright = smarttools.BUTTON(8)
 
-
+s = servo.Servo(Pin(2))
 
 # pot pin GPIO3, A1, D1
 pot = ADC(Pin(3))
@@ -37,7 +38,7 @@ light = ADC(Pin(5))
 light.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
 
 # plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
-ranges = {'pot': [0, 4095], 'light': [0, 4095], 'screenx': [4, 78], 'screeny': [59, 4]} # screeny is backwards because it is from top to bottom
+ranges = {'pot': [0, 4095], 'light': [0, 4095], 'motor': [0, 180], 'screenx': [4, 78], 'screeny': [59, 4]} # screeny is backwards because it is from top to bottom
 def transform(initial, final, value):
     initial = ranges[initial]
     final = ranges[final]
@@ -50,17 +51,10 @@ points = []
 
 
 
+
+
+
 #buttoncenter = button(10, holdthreshold = 10)
-while(False):
-    bleft.update()
-    bcenter.update()
-    bright.update()
-
-    
-    
-    print([[bleft.tapped, bleft.held], [bcenter.tapped, bcenter.held], [bright.tapped, bright.held]])
-
-    time.sleep(0.05)
 
 
 
@@ -71,6 +65,7 @@ while(True):
     bright.update()
 
     point = [transform('light', 'screenx', pot.read()), transform('pot', 'screeny', light.read())]
+    s.write_angle(transform('pot', 'motor', pot.read()))
     if bcenter.tapped:
         points.append(list(point))
     if bcenter.held:
