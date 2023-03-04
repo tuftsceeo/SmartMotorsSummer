@@ -3,7 +3,6 @@ import time
 import ssd1306
 
 
-
 #setting the pot
 pot=ADC(Pin(3))
 pot.atten(ADC.ATTN_11DB)
