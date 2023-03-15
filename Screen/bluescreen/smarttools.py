@@ -127,7 +127,7 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
 
     
         
-    def oldwritewords(self, mode):
+    def writewords(self, mode):
         self.text('edit', 126-8*4, 12, 1)
         self.text('train', 126-8*5, 28, 1)
         self.text('test', 126-8*4, 44, 1)
@@ -144,26 +144,17 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
 
         #           26 to 37
         #           42 to 53
-        
-    def writewords(self, mode):
-        self.text('setup', 4, 4, 1)  # its rectangle is ((2, 2), (45, 13))
-        self.text('train', 47, 4, 1) # its rectangle is ((45, 2), (88, 13))
-        self.text('test', 90, 4, 1)  # its rectangle is ((88, 2), (123, 13))
-        if mode == 0 or mode == 'setup':
-            self.rectangle((2, 2), (45, 13))
-        if mode == 1 or mode == 'train':
-            self.rectangle((45, 2), (88, 13))
-        if mode == 2 or mode == 'test':
-            self.rectangle((88, 2), (123, 13))
-        
-        # x from (123 - 8 * letters) to 127
-        # y values: 10 to 21
 
-        #           26 to 37
-        #           42 to 53
+
+
+
+
+
+
+
+
 
     def hplot(self, *args):
-
         if len(args) == 1:
 
             f = args[0]
@@ -188,10 +179,9 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         return None
         
     def writeall(self, point, points, mode):
-
         self.fill(0)
         self.writewords(mode)
-        self.rectangle((0, 16), (127, 63))
+        self.rectangle((0, 0), (82, 63))
         self.box7(point)
         for i in points:
             self.plot3(i)
