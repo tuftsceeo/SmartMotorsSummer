@@ -22,9 +22,9 @@ i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 display = smarttools.SSD1306_SMART(128, 64, i2c)
 
 
-bleft = smarttools.BUTTON(9)
-bcenter = smarttools.BUTTON(10)
-bright = smarttools.BUTTON(8)
+bleft = smarttools.BUTTON(9) # SELECT
+bcenter = smarttools.BUTTON(10) #DOWN
+bright = smarttools.BUTTON(8) #UP
 
 s = servo.Servo(Pin(2))
 
@@ -49,7 +49,7 @@ point = [9,9]
 points = []
 
 
-
+import wifisettings
 
 
 

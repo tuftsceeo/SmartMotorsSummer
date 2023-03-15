@@ -1,0 +1,22 @@
+{
+  "upload": {
+    "port": "/dev/tty.usbmodem14101",
+    "baud": 115200
+  },
+  "serial": {
+    "port": "/dev/tty.usbmodem14101",
+    "baud": 115200
+  },
+  "ignore": {
+    "extensions": [
+      ".micropythonrc"
+    ],
+    "directories": [
+      ".vscode"
+    ]
+  },
+  "tools": {
+    "ampy": "/Library/Frameworks/Python.framework/Versions/3.7/bin/ampy",
+    "rshell": "/Library/Frameworks/Python.framework/Versions/3.11/bin/rshell"
+  }
+}
