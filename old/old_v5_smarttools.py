@@ -5,49 +5,29 @@
 
 import ssd1306
 from machine import Pin
-import time
 
 class BUTTON(Pin):
-    def __init__(self, pin, holdthreshold = 500):
-        self.holdthreshold = holdthreshold # the number of miliseconds before a 'tap' becomes a 'hold'
-        self.lastup = False # This is False if the button is up and equal to time.ticks_ms() when the button was pressed if down
-        self.tapped = False # This becomes True for one update after the button is released for less than holdthreshold
-        self.held = False   # This becomes True for one update after the button has been held for more than holdthreshold
-        self.stillheld = False # This becomes and stays True if the button is held for more than holdthreshold
-        super().__init__(pin, Pin.IN) # inherits self.value() which is 1 if not pressed, 0 if pressed
+    def __init__(self, pin, holdthreshold = 30):
+        self.holdthreshold = holdthreshold
+        self.holdcount = 0
+        self.tapped = False
+        self.held = True
+        super().__init__(pin, Pin.IN, Pin.PULL_UP)
     def update(self):
         if self.value() == 1: # not pressed
-            if self.lastup == False: # not pressed and was never pressed
-                self.tapped = False
-                self.held = False
-                self.stillheld = False
-            elif time.ticks_ms() - self.lastup < self.holdthreshold: # not pressed, but just released from tap
-                self.lastup = False
+            if self.holdcount > 0 and not self.held:
                 self.tapped = True
-                self.held = False
-                self.stillheld = False
-            else: # not pressed, but just released from hold
-                self.lastup = False
+            else:
                 self.tapped = False
+            self.held = False
+            self.holdcount = 0
+        if self.value() == 0: # pressed
+            self.holdcount += 1
+            if self.holdcount >= self.holdthreshold:
+                self.held = True
+            else:
                 self.held = False
-                self.stillheld = False
-        else: # pressed
-            if self.lastup == False: # This is the first update it was pressed
-                self.lastup = time.ticks_ms()
-                self.tapped = False
-                self.held = False
-                self.stillheld = False
-            elif time.ticks_ms() - self.lastup < self.holdthreshold: # It has not been long enough for a hold
-                pass
-            else: # The button has been held
-                if self.stillheld == False: # This is the first update since it was held
-                    self.tapped = False
-                    self.held = True
-
-
-                    self.stillheld = True
-                else: # It has been held for a while
-                    self.held = False
+            self.tapped = False
 
 class SSD1306_SMART(ssd1306.SSD1306_I2C):
     def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False, scale = 8, mode = 0, plotsize = [[3,3],[100,60]]):
@@ -92,7 +72,6 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         if len(args) == 2:
             x1, y1, x2, y2 = args[0][0], args[0][1], args [1][0], args[1][1]
         if len(args) == 4:
-
             x1, y1, x2, y2 = args[0], args[1], args[2], args[3]
         self.hline(x1, y1, x2, y1)
 
@@ -109,7 +88,6 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
             x1, y1, x2, y2 = args[0][0], args[0][1], args [1][0], args[1][1]
         elif len(args) == 4:
             x1, y1, x2, y2 = args
-
 
         else:
             return None
@@ -174,8 +152,6 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         if mode == 0 or mode == 'setup':
             self.rectangle((2, 2), (45, 13))
         if mode == 1 or mode == 'train':
-
-
             self.rectangle((45, 2), (88, 13))
         if mode == 2 or mode == 'test':
             self.rectangle((88, 2), (123, 13))
@@ -212,7 +188,6 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         return None
         
     def writeall(self, point, points, mode):
-
 
         self.fill(0)
         self.writewords(mode)
