@@ -92,8 +92,8 @@ while(True):
 
     elif mode == 2:
         pass
-        point = [transform('light', 'screenx', light.read()), -20]
-        s.write_angle(transform('screeny', 'motor', smartfunctions.extremeLine(points, point)))
+        #point = [transform('light', 'screenx', light.read()), -20]
+        #s.write_angle(transform('screeny', 'motor', smartfunctions.extremeLine(points, point)))
         #print(transform('screeny', 'motor', smartfunctions.extremeline(points, point)))
     display.writeall(point, points, mode = mode)
 
