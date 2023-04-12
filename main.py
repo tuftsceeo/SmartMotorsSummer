@@ -79,18 +79,16 @@ while(True):
     bup.update()
     if bdown.tapped or bselect.held:
         mode = (mode + 1) % 3
-    if mode == 0:
-        point = [transform('light', 'screenx', light.read()), transform('pot', 'screeny', pot.read())]
+    if mode == 1:
+        point = [transform('light', 'oldscreenx', light.read()), transform('pot', 'oldscreeny', pot.read())]
         s.write_angle(transform('pot', 'motor', pot.read()))
         if bselect.tapped:
             points.append(list(point))
-        if bselect.held: # This is just a test
-            points.append([point[0] - 15, point[1] - 15])
-    elif mode == 1:
-        point = [transform('light', 'screenx', light.read()), -20]
-        s.write_angle(transform('screeny', 'motor', smartfunctions.nearestNeighbor(points, point)))
-
     elif mode == 2:
+        point = [transform('light', 'oldscreenx', light.read()), -20]
+        s.write_angle(transform('oldscreeny', 'motor', smartfunctions.nearestNeighbor(points, point)))
+
+    elif mode == 0:
         pass
         #point = [transform('light', 'screenx', light.read()), -20]
         #s.write_angle(transform('screeny', 'motor', smartfunctions.extremeLine(points, point)))

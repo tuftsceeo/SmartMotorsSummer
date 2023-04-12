@@ -3,6 +3,8 @@ def nearestNeighbor(data, point):
         point = point[0]
     except TypeError:
         pass
+    if len(data) == 0:
+        return 0
     diff = 1000
     test = None
     for i in data:
@@ -13,7 +15,7 @@ def nearestNeighbor(data, point):
 
 
 
-def extremeLine(data, point):
+def extremeLine(data, point): # Not currently functional
     try:
         point = point[0]
     except TypeError:

@@ -153,12 +153,11 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         self.text('edit', 126-8*4, 12, 1)
         self.text('train', 126-8*5, 28, 1)
         self.text('test', 126-8*4, 44, 1)
-        if mode == 1:
+        if mode == 0:
             self.rectangle((124 - 8*4, 10), (127, 21))
-        if mode == 2:
+        if mode == 1:
             self.rectangle((124 - 8*5, 26), (127, 37))
-        if mode == 3:
-
+        if mode == 2:
             self.rectangle((124 - 8*4, 42), (127, 53))
         
         # x from (123 - 8 * letters) to 127
@@ -168,23 +167,43 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         #           42 to 53
         
     def writewords(self, mode):
-        self.text('setup', 4, 4, 1)  # its rectangle is ((2, 2), (45, 13))
-        self.text('train', 47, 4, 1) # its rectangle is ((45, 2), (88, 13))
-        self.text('test', 90, 4, 1)  # its rectangle is ((88, 2), (123, 13))
-        if mode == 0 or mode == 'setup':
-            self.rectangle((2, 2), (45, 13))
-        if mode == 1 or mode == 'train':
-
-
-            self.rectangle((45, 2), (88, 13))
-        if mode == 2 or mode == 'test':
-            self.rectangle((88, 2), (123, 13))
+        orientation = 'vertical'
+        if orientation == 'vertical':
+            self.text('edit', 126-8*4, 12, 1)
+            self.text('train', 126-8*5, 28, 1)
+            self.text('test', 126-8*4, 44, 1)
+            if mode == 0:
+                self.rectangle((124 - 8*4, 10), (127, 21))
+            if mode == 1:
+                self.rectangle((124 - 8*5, 26), (127, 37))
+            if mode == 2:
+                self.rectangle((124 - 8*4, 42), (127, 53))
+            #self.text('setup', 125 - 8 * 5, 19, 1)  # its rectangle is ((2, 2), (45, 13))
+            #self.text('train', 125 - 8 * 5, 35, 1) # its rectangle is ((45, 2), (88, 13))
+            #self.text('test',  125 - 8 * 4, 51, 1)  # its rectangle is ((88, 2), (123, 13))
+            #if mode == 0 or mode == 'setup':
+            #    self.rectangle((123 - 8 * 5, 0), (127, 21))
+            #if mode == 1 or mode == 'train':
+            #    self.rectangle((123 - 8 * 5, 26), (127, 37))
+            #if mode == 2 or mode == 'test':
+            #    self.rectangle((123 - 8 * 4, 42), (127, 53))
         
         # x from (123 - 8 * letters) to 127
         # y values: 10 to 21
-
         #           26 to 37
         #           42 to 53
+
+        elif orientation == 'horizontal':
+            self.text('setup', 4, 4, 1)  # its rectangle is ((2, 2), (45, 13))
+            self.text('train', 47, 4, 1) # its rectangle is ((45, 2), (88, 13))
+            self.text('test', 90, 4, 1)  # its rectangle is ((88, 2), (123, 13))
+            if mode == 0 or mode == 'setup':
+                self.rectangle((2, 2), (45, 13))
+            if mode == 1 or mode == 'train':
+                self.rectangle((45, 2), (88, 13))
+            if mode == 2 or mode == 'test':
+                self.rectangle((88, 2), (123, 13))
+
 
     def hplot(self, *args):
 
@@ -216,7 +235,11 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
 
         self.fill(0)
         self.writewords(mode)
-        self.rectangle((0, 16), (127, 63))
+        orientation = 'vertical'
+        if orientation == 'vertical':
+            self.rectangle((0, 0), (84, 63))
+        elif orientation == 'horizontal':
+            self.rectangle((0, 16), (127, 63))
         self.box7(point)
         for i in points:
             self.plot3(i)
