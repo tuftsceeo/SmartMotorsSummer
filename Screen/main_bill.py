@@ -17,12 +17,6 @@ from machine import Pin, SoftI2C, PWM, ADC
 import time
 import smarttools
 import servo
-import smartfunctions
-
-
-
-
-
 
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 display = smarttools.SSD1306_SMART(128, 64, i2c)
@@ -32,17 +26,12 @@ bup = smarttools.BUTTON(8)
 bselect = smarttools.BUTTON(9)
 bdown = smarttools.BUTTON(10)
 
-
-
-
 s = servo.Servo(Pin(2))
 
 # pot pin GPIO3, A1, D1
-
 pot = ADC(Pin(3))
 pot.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
 # pot.read() returns integers in [0, 4095]
-
 
 # light pin GPIO5
 light = ADC(Pin(5))
@@ -60,10 +49,17 @@ def transform(initial, final, value):
 
 
 
-mode = 0
+mode = 2
 point = [9,9]
 points = []
 
+
+for i in range(0,70,4):
+    None #display.rectangle(i, i, i+3, i+3)
+#display.rectangle(0, 0, 123, 15)
+#display.rectangle((45, 2), (88, 13))
+
+#display.rectangle(0, 16, 123, 63)
 
 
 #display.text('setup', 4, 4, 1)  # its rectangle is ((2, 2), (45, 13))
@@ -72,30 +68,24 @@ points = []
 #display.show()
 
 
+
+
 while(True):
     bdown.update()
+
+
     bselect.update()
     bup.update()
-    if bdown.tapped or bselect.held:
+    
+    if bdown.tapped:
         mode = (mode + 1) % 3
     if mode == 1:
-        point = [transform('light', 'oldscreenx', light.read()), transform('pot', 'oldscreeny', pot.read())]
+        point = [transform('light', 'screenx', pot.read()), transform('pot', 'screeny', light.read())]
         s.write_angle(transform('pot', 'motor', pot.read()))
         if bselect.tapped:
             points.append(list(point))
+        if bselect.held: # This is just a test
+            points.append([point[0] - 15, point[1] - 15])
     elif mode == 2:
-        point = [transform('light', 'oldscreenx', light.read()), -20] 
-        motor_position =  smartfunctions.nearestNeighbor(points, point) #<---added wchurch april 12, 2023
-        # s.write_angle(transform('oldscreeny', 'motor', smartfunctions.nearestNeighbor(points, point)))
-        s.write_angle(transform('oldscreeny', 'motor', motor_position)) #<---modified wchurch april 12, 2023
-        point = [transform('light', 'oldscreenx', light.read()), motor_position]  #<----to show box during testing; added wchurch april 12, 2023
-
-
-    elif mode == 0:
-        pass
-        #point = [transform('light', 'screenx', light.read()), -20]
-        #s.write_angle(transform('screeny', 'motor', smartfunctions.extremeLine(points, point)))
-        #print(transform('screeny', 'motor', smartfunctions.extremeline(points, point)))
+        point = [-20, -20]
     display.writeall(point, points, mode = mode)
-
-

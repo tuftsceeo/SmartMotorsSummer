@@ -2,10 +2,11 @@
 # the superclass SSD1306_SMART with many graphics functions for the smart motor.
 
 # MicroPython SSD1306 OLED driver, I2C and SPI interfaces
-
+import framebuf
 import ssd1306
 from machine import Pin
 import time
+
 
 class BUTTON(Pin):
     def __init__(self, pin, holdthreshold = 500):
@@ -49,7 +50,7 @@ class BUTTON(Pin):
                 else: # It has been held for a while
                     self.held = False
 
-class SSD1306_SMART(ssd1306.SSD1306_I2C):
+class SSD1306_SMART(ssd1306.SSD1306_I2C): #<-----added framebuf by wchurch 4/12/2023
     def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False, scale = 8, mode = 0, plotsize = [[3,3],[100,60]]):
         self.scale = scale
         self.mode = mode # 0 for learn, 1 for repeat
@@ -166,18 +167,24 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         #           26 to 37
         #           42 to 53
         
-    def writewords(self, mode):
+    def writewords(self, mode): # <---- WCHURCH ADDED SYMBOL INSTEAD OF WORK 'test'; 4/12/2023)
         orientation = 'vertical'
         if orientation == 'vertical':
-            self.text('edit', 126-8*4, 12, 1)
-            self.text('train', 126-8*5, 28, 1)
-            self.text('test', 126-8*4, 44, 1)
+            #self.text('edit', 126-8*4, 12, 1)
+            gear_buf = framebuf.FrameBuffer(bytearray(b'\x0f\x00\t\x00p\xe0\x00\x00\x8f\x10I I \x8f\x10\x00\x00p\xe0\t\x00\x0f\x00'), 12, 12, framebuf.MONO_HLSB)
+            self.blit(gear_buf, 140-8*4, 12)
+            #self.text('train', 126-8*5, 28, 1)
+            train_buf = framebuf.FrameBuffer(bytearray(b'\xff\xf0\x00\x10`\x10\x90\x10`\x10\x01\x10F\x10\xf8\x10\xf0\x10\xe3\xf0\xe0\x00\xe0\x00'), 12, 12, framebuf.MONO_HLSB)
+            self.blit(train_buf, 148-8*5, 28) # <---- this line plus previous play_buf declaration added 4/12/2023)
+            # self.text('test', 126-8*4, 44, 1)
+            play_buf = framebuf.FrameBuffer(bytearray(b'\x0f\x00 @@ \x00\x00\x8c\x10\x8a\x10\x89\x10\x8a\x10\x0c\x00@  @\x0f\x00'), 12, 12, framebuf.MONO_HLSB)
+            self.blit(play_buf,138-8*4, 44)  # <---- this line plus previous play_buf declaration added 4/12/2023)
             if mode == 0:
                 self.rectangle((124 - 8*4, 10), (127, 21))
             if mode == 1:
                 self.rectangle((124 - 8*5, 26), (127, 37))
             if mode == 2:
-                self.rectangle((124 - 8*4, 42), (127, 53))
+                self.rectangle((124 - 8*4, 42), (127, 58))
             #self.text('setup', 125 - 8 * 5, 19, 1)  # its rectangle is ((2, 2), (45, 13))
             #self.text('train', 125 - 8 * 5, 35, 1) # its rectangle is ((45, 2), (88, 13))
             #self.text('test',  125 - 8 * 4, 51, 1)  # its rectangle is ((88, 2), (123, 13))
