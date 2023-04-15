@@ -1,10 +1,11 @@
 # This is a modification to the ssd1306.py package that includes 
 # the superclass SSD1306_SMART with many graphics functions for the smart motor.
-
 # MicroPython SSD1306 OLED driver, I2C and SPI interfaces
-
+f=open('smarttools.py','w')
+a='''
 import ssd1306
 from machine import Pin
+
 
 class BUTTON(Pin):
     def __init__(self, pin, holdthreshold = 30):
@@ -196,3 +197,7 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         for i in points:
             self.plot3(i)
         self.show()
+        
+'''
+f.write(a)
+f.close()

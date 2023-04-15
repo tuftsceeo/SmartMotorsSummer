@@ -12,7 +12,8 @@
 #display.show()
 #display.hline(0, 8, 4, 1) # not working
 #display.rect(10, 10, 107, 43, 1) # not working
-
+f=open('main.py','w')
+a='''
 from machine import Pin, SoftI2C, PWM, ADC
 import time
 import smarttools
@@ -89,3 +90,7 @@ while(True):
     elif mode == 2:
         point = [-20, -20]
     display.writeall(point, points, mode = mode)
+    
+'''
+f.write(a)
+f.close()   
