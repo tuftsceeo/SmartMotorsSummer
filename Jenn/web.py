@@ -1,6 +1,10 @@
 def web_page():
     webpage = """
     <!DOCTYPE html>
+<html>
+<body>
+
+    <!DOCTYPE html>
     <html>
     <head>
     <title>Web Server</title>
@@ -97,6 +101,18 @@ def web_page():
       display: none;
       padding: 10px 20px;
     }
+    
+    
+     .graph {
+          padding-left: 0;
+          padding-right: 0;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+      }
+      
+    
+    
     /* Button to add and delete valuues from the table */
     .button {
       border: none;
@@ -166,9 +182,13 @@ def web_page():
     </div>
     
     <div id="play" class="tabcontent">
-      <p> <button class="button button1" type="button" onclick="test()" id="toggle_play">Play!</button></p> 
-      
+      <p> <button class="button button1" type="button" onclick="test()" id="toggle_play">Play!
+ </button></p> 
+          	<canvas class="graph" id="myCanvas" width="290" height="240" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML canvas tag.</canvas>
     </div>
+    
+  
     
     <div id="motor" class="tabcontent">
         <div class="gauge">
@@ -217,6 +237,7 @@ def web_page():
     <script>
             const sensor = [];
             const motor = [];
+            var g;
             // Tabs 
             function openPage(pageName,elmnt,color) {
               var elem = document.getElementById("heading");
@@ -256,6 +277,10 @@ def web_page():
                 document.getElementById("tableeee").style.display = "block";
               
               }
+              
+              var c = document.getElementById("myCanvas");
+			  g = new Graph(c)
+              
               
             }
             
@@ -393,6 +418,70 @@ def web_page():
                 xhttp.open("GET", "/?stop", true);
                 xhttp.send();
             }
+            
+            class Graph{
+            
+           	constructor(c) {  // Constructor
+               this.canvas = c
+               this.ctx = this.canvas.getContext("2d");
+                // GRID width
+                this.bw = 290;
+                // GRID height
+                this.bh = 240;
+                // GRID PADDING
+                this.start = 20;
+                // GRID SPACING
+                this.gap = 50;
+                
+               this.draw_axes();
+               this.draw_point(50,90);
+   
+            }
+            
+           update(){
+           		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.draw_axes()
+           }
+           
+           convert_x(x){
+           	// Assume the svals are 0-100 convert to a scale - start to bw-start
+           	var cx = ((this.bw-this.start*2) * (x/100)) + this.start;
+            return cx;
+           }
+           
+            convert_y(y){
+           	// Assume the svals are 0-100 convert to a scale - start to bh-start
+           	var cy = ((this.bh-this.start*2) * (180-y)/180) + this.start;
+            return cy;
+           }
+            
+           draw_axes(){
+
+            for (var x = 0; x <= 100; x += 20) {
+            //vert lines
+                   this.ctx.moveTo(this.convert_x(x), this.convert_y(0));
+                   this.ctx.lineTo(this.convert_x(x), this.convert_y(180));
+              }
+
+              for (var y = 0; y <= 180; y += 45) {
+             //horz lines
+                  this.ctx.moveTo(this.convert_x(0), this.convert_y(y));
+                  this.ctx.lineTo(this.convert_x(100), this.convert_y(y));
+              }
+              this.ctx.strokeStyle = "black";
+              this.ctx.stroke();
+           }
+           
+           draw_point(sval, mval) {
+           
+           //Assume the mvals are 0-180 convert to a scale - start+bh to star
+           	  
+              this.ctx.beginPath();
+              this.ctx.arc(this.convert_x(50),this.convert_y(45),5,0,2*Math.PI);
+              this.ctx.stroke();
+			}
+            }
+            
             
     </script>
        
