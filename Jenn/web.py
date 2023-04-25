@@ -1,6 +1,6 @@
 def web_page():
     webpage = """
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <body>
 
@@ -184,8 +184,7 @@ def web_page():
     <div id="play" class="tabcontent">
       <p> <button class="button button1" type="button" onclick="test()" id="toggle_play">Play!
  </button></p> 
-          	<canvas class="graph" id="myCanvas" width="290" height="240" style="border:1px solid #d3d3d3;">
-Your browser does not support the HTML canvas tag.</canvas>
+
     </div>
     
   
@@ -220,6 +219,12 @@ Your browser does not support the HTML canvas tag.</canvas>
             <button class="button button2" type="button" onclick="deletevalue()">Delete Value</button>
         </p>
     </div>
+    <div id="my_graph" class="tabcontent">
+              	<canvas class="graph" id="myCanvas" width="290" height="240" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML canvas tag.</canvas>
+</div>
+    
+    
     <div id="tableeee" class="tabcontent">
     
         <h3>Training Values</h3>
@@ -269,12 +274,14 @@ Your browser does not support the HTML canvas tag.</canvas>
                 stop();
                 document.getElementById("train_test_button").style.display = "block";
                 document.getElementById("tableeee").style.display = "block";
+                document.getElementById("my_graph").style.display = "block";
               }
               
               if(pageName == "play"){
                 //document.getElementById("motor").style.display = "block";
                 document.getElementById("light_sensor").style.display = "block";
                 document.getElementById("tableeee").style.display = "block";
+                document.getElementById("my_graph").style.display = "block";
               
               }
               
@@ -382,6 +389,9 @@ Your browser does not support the HTML canvas tag.</canvas>
               
                 // Append row to table body
                 table.appendChild(row)
+                
+                // Add point to graph
+                g.draw_point(sensorValue, sliderValue) 
             }
             
             function deletevalue() {
@@ -434,7 +444,7 @@ Your browser does not support the HTML canvas tag.</canvas>
                 this.gap = 50;
                 
                this.draw_axes();
-               this.draw_point(50,90);
+               //this.draw_point(50,90);
    
             }
             
@@ -477,8 +487,9 @@ Your browser does not support the HTML canvas tag.</canvas>
            //Assume the mvals are 0-180 convert to a scale - start+bh to star
            	  
               this.ctx.beginPath();
-              this.ctx.arc(this.convert_x(50),this.convert_y(45),5,0,2*Math.PI);
-              this.ctx.stroke();
+              this.ctx.arc(this.convert_x(sval),this.convert_y(mval),5,0,2*Math.PI);
+              this.ctx.fillStyle = "gray";
+			  this.ctx.fill();
 			}
             }
             
@@ -487,6 +498,6 @@ Your browser does not support the HTML canvas tag.</canvas>
        
     </body>
     </html> 
-    """
+"""
     return webpage
 
