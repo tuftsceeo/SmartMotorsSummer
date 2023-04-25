@@ -220,7 +220,7 @@ def web_page():
         </p>
     </div>
     <div id="my_graph" class="tabcontent">
-              	<canvas class="graph" id="myCanvas" width="290" height="240" style="border:1px solid #d3d3d3;">
+              	<canvas class="graph" id="myCanvas" width="330" height="280" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML canvas tag.</canvas>
 </div>
     
@@ -442,11 +442,11 @@ Your browser does not support the HTML canvas tag.</canvas>
                this.canvas = c
                this.ctx = this.canvas.getContext("2d");
                 // GRID width
-                this.bw = 290;
+                this.bw = this.canvas.width;
                 // GRID height
-                this.bh = 240;
+                this.bh = this.canvas.height;
                 // GRID PADDING
-                this.start = 20;
+                this.start = 40;
                 // GRID SPACING
                 this.gap = 50;
                 
@@ -510,21 +510,40 @@ Your browser does not support the HTML canvas tag.</canvas>
            draw_axes(){
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
-                this.ctx.strokeStyle = "black";
-            for (var x = 0; x <= 100; x += 20) {
-            //vert lines
-                   this.ctx.moveTo(this.convert_x(x), this.convert_y(0));
-                   this.ctx.lineTo(this.convert_x(x), this.convert_y(180));
-              }
-
-              for (var y = 0; y <= 180; y += 45) {
-             //horz lines
-                  this.ctx.moveTo(this.convert_x(0), this.convert_y(y));
-                  this.ctx.lineTo(this.convert_x(100), this.convert_y(y));
-              }
-              
-              this.ctx.stroke();
+                 for (var x = 0; x <= 100; x += 20) {
+                //vert lines
+                       this.ctx.moveTo(this.convert_x(x), this.convert_y(0));
+                       this.ctx.lineTo(this.convert_x(x), this.convert_y(180));
+                  }
+                  for (var y = 0; y <= 180; y += 45) {
+                 //horz lines
+                      this.ctx.moveTo(this.convert_x(0), this.convert_y(y));
+                      this.ctx.lineTo(this.convert_x(100), this.convert_y(y));
+                  }
+                  this.ctx.strokeStyle = "black";
+                  this.ctx.stroke();
+				this.ctx.font = "15px Arial";
+				this.ctx.strokeText("Sensor Value",120,265);
+                // horizontal axis
+                this.ctx.strokeText("0",20,257);
+                this.ctx.strokeText("100",276,257);
+                // vertical axis
+                this.ctx.strokeText("180",10,50);
+                // save orientation again
+                this.ctx.save();
+                // hold top-right hand corner when rotating
+                this.ctx.translate( 330 - 1, 0 );
+                // rotate 270 degrees
+                this.ctx.rotate( 3 * Math.PI / 2 );
+                //this.ctx.font = "16px serif";
+                //this.ctx.fillStyle = "#0000FF"; // blue
+                this.ctx.textAlign = "right";
+                // draw relative to translate point
+                //this.ctx.fillText( "right-aligned 270 deg", -75, -300 );
+                this.ctx.strokeText("Motor Value",-100,-300);
+                this.ctx.restore();
            }
+           
            
            draw_point(sval, mval) {
            
