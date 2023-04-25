@@ -1,5 +1,9 @@
 def web_page():
     webpage = """
+<!DOCTYPE html>
+<html>
+<body>
+
     <!DOCTYPE html>
     <html>
     <head>
@@ -97,6 +101,18 @@ def web_page():
       display: none;
       padding: 10px 20px;
     }
+    
+    
+     .graph {
+          padding-left: 0;
+          padding-right: 0;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+      }
+      
+    
+    
     /* Button to add and delete valuues from the table */
     .button {
       border: none;
@@ -166,9 +182,12 @@ def web_page():
     </div>
     
     <div id="play" class="tabcontent">
-      <p> <button class="button button1" type="button" onclick="test()" id="toggle_play">Play!</button></p> 
-      
+      <p> <button class="button button1" type="button" onclick="test()" id="toggle_play">Play!
+ </button></p> 
+
     </div>
+    
+  
     
     <div id="motor" class="tabcontent">
         <div class="gauge">
@@ -200,6 +219,12 @@ def web_page():
             <button class="button button2" type="button" onclick="deletevalue()">Delete Value</button>
         </p>
     </div>
+    <div id="my_graph" class="tabcontent">
+                <canvas class="graph" id="myCanvas" width="330" height="280" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML canvas tag.</canvas>
+</div>
+    
+    
     <div id="tableeee" class="tabcontent">
     
         <h3>Training Values</h3>
@@ -215,8 +240,9 @@ def web_page():
     </div>
     
     <script>
-            const sensor = [];
-            const motor = [];
+            const sensor_array = [];
+            const motor_array = [];
+            var g;
             // Tabs 
             function openPage(pageName,elmnt,color) {
               var elem = document.getElementById("heading");
@@ -248,14 +274,20 @@ def web_page():
                 stop();
                 document.getElementById("train_test_button").style.display = "block";
                 document.getElementById("tableeee").style.display = "block";
+                document.getElementById("my_graph").style.display = "block";
               }
               
               if(pageName == "play"){
                 //document.getElementById("motor").style.display = "block";
                 document.getElementById("light_sensor").style.display = "block";
                 document.getElementById("tableeee").style.display = "block";
+                document.getElementById("my_graph").style.display = "block";
               
               }
+              
+              var c = document.getElementById("myCanvas");
+        g = new Graph(c)
+              
               
             }
             
@@ -291,6 +323,8 @@ def web_page():
                   var xhr = new XMLHttpRequest();
                   xhr.open("GET", "/slider?value="+sliderValue, true);
                   xhr.send();
+                  g.update_motor_val(Number(sliderValue))
+                  g.redraw()
             }
             const gaugeElement = document.querySelector(".gauge");
             setGaugeValue(gaugeElement, 0.5);
@@ -308,8 +342,13 @@ def web_page():
                         var ajaxResult = ajaxRequest.responseText;  
                         var tmpArray = ajaxResult.split("|");  
                         document.getElementById("temp").innerHTML = tmpArray[0];
+                        if(tmpArray[1] != "-1")
+                        {
+                            g.update_motor_val(Number(tmpArray[1]))
+                        }
                         updateProgressBar(myProgressBar, parseInt(ajaxResult));
-                        
+                        g.update_sensor_val(Number(tmpArray[0]))
+                        g.redraw()
                      }
                  
                 }  
@@ -325,9 +364,15 @@ def web_page():
             
             // add a row to the table
             function addvalue(){
+                // get slider value reading
+                var sliderValue = document.getElementById("pwmSlider").value;
+                // get sensor reading
+                var sensorValue = document.getElementById("temp").innerHTML;
+                
                 var xhttp = new XMLHttpRequest();
-                xhttp.open("GET", "/?addvalue", true);
+                xhttp.open("GET", "/?addvalue="+sliderValue+"="+sensorValue, true);
                 xhttp.send();
+                
                 
                 // Get the table body element in which you want to add row
                 let table = document.getElementById("tableBody");
@@ -338,14 +383,12 @@ def web_page():
                 // Create cells
                 let c1 = document.createElement("td")
                 let c2 = document.createElement("td")
-              
-                // get slider value reading
-                var sliderValue = document.getElementById("pwmSlider").value;
-                // get sensor reading
-                var sensorValue = document.getElementById("temp").innerHTML;
                 
-                sensor.push(sensorValue);
-                motor.push(sliderValue);
+                sensor_array.push(Number(sensorValue));
+                motor_array.push(Number(sliderValue));
+                
+                console.log("Sensor Array", sensor_array)
+                console.log("Motor Array", motor_array)
               
                 // Insert data to cells
                 c1.innerText = sensorValue;
@@ -357,6 +400,9 @@ def web_page():
               
                 // Append row to table body
                 table.appendChild(row)
+                
+                // Add point to graph
+                g.redraw();
             }
             
             function deletevalue() {
@@ -367,9 +413,14 @@ def web_page():
                 
                 var table = document.getElementById('myTable');
                 var rowCount = table.rows.length;
-                table.deleteRow(rowCount -1);
-                sensor.pop();
-                motor.pop();
+                if(rowCount > 1) {
+                    table.deleteRow(rowCount -1);
+                    sensor_array.pop();
+                    motor_array.pop();
+                    g.redraw();
+                
+                }
+                
             }
             
             function test(){
@@ -394,10 +445,134 @@ def web_page():
                 xhttp.send();
             }
             
+            class Graph{
+            
+            constructor(c) {  // Constructor
+               this.canvas = c
+               this.ctx = this.canvas.getContext("2d");
+                // GRID width
+                this.bw = this.canvas.width;
+                // GRID height
+                this.bh = this.canvas.height;
+                // GRID PADDING
+                this.start = 40;
+                // GRID SPACING
+                this.gap = 50;
+                
+                this.last_sensor_val = 50;
+                this.last_motor_val = 90;
+                
+               this.redraw();
+               
+   
+            }
+            
+           update_sensor_val(sval){
+               this.last_sensor_val = sval;
+           }
+           
+           update_motor_val(mval){
+               this.last_motor_val = mval;
+           }
+            
+           redraw(){
+              console.log("Update graph");
+              this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.draw_axes()
+                this.draw_sensorline(this.last_sensor_val);
+                this.draw_motorline(this.last_motor_val);
+                for (var i = 0; i < sensor_array.length; i++) {
+                    this.draw_point(sensor_array[i], motor_array[i]) 
+                }
+                
+           }
+           
+           convert_x(x){
+            // Assume the svals are 0-100 convert to a scale - start to bw-start
+            var cx = ((this.bw-this.start*2) * (x/100)) + this.start;
+            return cx;
+           }
+           
+            convert_y(y){
+            // Assume the svals are 0-100 convert to a scale - start to bh-start
+            var cy = ((this.bh-this.start*2) * (180-y)/180) + this.start;
+            return cy;
+           }
+           draw_sensorline(sval){
+                this.ctx.beginPath();
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeStyle = "#FFD65C";
+                this.ctx.moveTo(this.convert_x(sval), this.convert_y(0));
+                this.ctx.lineTo(this.convert_x(sval), this.convert_y(180));
+                this.ctx.stroke();
+           }
+           draw_motorline(mval){
+                this.ctx.beginPath();
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeStyle = "#85B3DE";
+                this.ctx.moveTo(this.convert_x(0), this.convert_y(mval));
+                this.ctx.lineTo(this.convert_x(100), this.convert_y(mval));
+                this.ctx.stroke();
+           
+           }
+           
+           draw_axes(){
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                 for (var x = 0; x <= 100; x += 20) {
+                //vert lines
+                       this.ctx.moveTo(this.convert_x(x), this.convert_y(0));
+                       this.ctx.lineTo(this.convert_x(x), this.convert_y(180));
+                  }
+                  for (var y = 0; y <= 180; y += 45) {
+                 //horz lines
+                      this.ctx.moveTo(this.convert_x(0), this.convert_y(y));
+                      this.ctx.lineTo(this.convert_x(100), this.convert_y(y));
+                  }
+                  this.ctx.strokeStyle = "black";
+                  this.ctx.stroke();
+        this.ctx.font = "15px Arial";
+        this.ctx.strokeText("Sensor Value",120,265);
+                // horizontal axis
+                this.ctx.strokeText("0",20,257);
+                this.ctx.strokeText("100",276,257);
+                // vertical axis
+                this.ctx.strokeText("180",10,50);
+                // save orientation again
+                this.ctx.save();
+                // hold top-right hand corner when rotating
+                this.ctx.translate( 330 - 1, 0 );
+                // rotate 270 degrees
+                this.ctx.rotate( 3 * Math.PI / 2 );
+                //this.ctx.font = "16px serif";
+                //this.ctx.fillStyle = "#0000FF"; // blue
+                this.ctx.textAlign = "right";
+                // draw relative to translate point
+                //this.ctx.fillText( "right-aligned 270 deg", -75, -300 );
+                this.ctx.strokeText("Motor Value",-100,-300);
+                this.ctx.restore();
+           }
+           
+           
+           draw_point(sval, mval) {
+           
+           //Assume the mvals are 0-180 convert to a scale - start+bh to star
+              
+              this.ctx.beginPath();
+              this.ctx.fillStyle = "gray";
+              this.ctx.arc(this.convert_x(sval),this.convert_y(mval),5,0,2*Math.PI);
+        
+        this.ctx.fill();
+      }
+            }
+            
+            
     </script>
        
     </body>
     </html> 
-    """
+"""
     return webpage
+
+
 
