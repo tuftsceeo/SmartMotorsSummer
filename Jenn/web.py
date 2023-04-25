@@ -240,8 +240,8 @@ Your browser does not support the HTML canvas tag.</canvas>
     </div>
     
     <script>
-            const sensor = [];
-            const motor = [];
+            const sensor_array = [];
+            const motor_array = [];
             var g;
             // Tabs 
             function openPage(pageName,elmnt,color) {
@@ -341,7 +341,7 @@ Your browser does not support the HTML canvas tag.</canvas>
                         var tmpArray = ajaxResult.split("|");  
                         document.getElementById("temp").innerHTML = tmpArray[0];
                         updateProgressBar(myProgressBar, parseInt(ajaxResult));
-                        
+                        g.update_sensor_val(tmpArray[0])
                      }
                  
                 }  
@@ -376,8 +376,11 @@ Your browser does not support the HTML canvas tag.</canvas>
                 // get sensor reading
                 var sensorValue = document.getElementById("temp").innerHTML;
                 
-                sensor.push(sensorValue);
-                motor.push(sliderValue);
+                sensor_array.push(Number(sensorValue));
+                motor_array.push(Number(sliderValue));
+                
+                console.log("Sensor Array", sensor_array)
+                console.log("Motor Array", motor_array)
               
                 // Insert data to cells
                 c1.innerText = sensorValue;
@@ -391,7 +394,7 @@ Your browser does not support the HTML canvas tag.</canvas>
                 table.appendChild(row)
                 
                 // Add point to graph
-                g.draw_point(sensorValue, sliderValue) 
+                g.redraw();
             }
             
             function deletevalue() {
@@ -403,8 +406,9 @@ Your browser does not support the HTML canvas tag.</canvas>
                 var table = document.getElementById('myTable');
                 var rowCount = table.rows.length;
                 table.deleteRow(rowCount -1);
-                sensor.pop();
-                motor.pop();
+                sensor_array.pop();
+                motor_array.pop();
+                g.redraw();
             }
             
             function test(){
@@ -443,14 +447,26 @@ Your browser does not support the HTML canvas tag.</canvas>
                 // GRID SPACING
                 this.gap = 50;
                 
+                this.last_sensor_val = 50;
+                
                this.draw_axes();
-               //this.draw_point(50,90);
+               
    
             }
             
-           update(){
+           update_sensor_val(sval){
+               this.last_sensor_val = sval;
+               this.redraw();
+           }
+            
+           redraw(){
+           		console.log("Update graph");
            		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.draw_axes()
+                for (var i = 0; i < sensor_array.length; i++) {
+                    this.draw_point(sensor_array[i], motor_array[i]) 
+                }
+                this.draw_sensorline(this.last_sensor_val);
            }
            
            convert_x(x){
@@ -464,9 +480,19 @@ Your browser does not support the HTML canvas tag.</canvas>
            	var cy = ((this.bh-this.start*2) * (180-y)/180) + this.start;
             return cy;
            }
-            
+           draw_sensorline(sval){
+                this.ctx.beginPath();
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeStyle = "#FFD65C";
+                this.ctx.moveTo(this.convert_x(sval), this.convert_y(0));
+                this.ctx.lineTo(this.convert_x(sval), this.convert_y(180));
+                this.ctx.stroke();
+           
+           }
            draw_axes(){
-
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = "black";
             for (var x = 0; x <= 100; x += 20) {
             //vert lines
                    this.ctx.moveTo(this.convert_x(x), this.convert_y(0));
@@ -478,7 +504,7 @@ Your browser does not support the HTML canvas tag.</canvas>
                   this.ctx.moveTo(this.convert_x(0), this.convert_y(y));
                   this.ctx.lineTo(this.convert_x(100), this.convert_y(y));
               }
-              this.ctx.strokeStyle = "black";
+              
               this.ctx.stroke();
            }
            
@@ -487,8 +513,9 @@ Your browser does not support the HTML canvas tag.</canvas>
            //Assume the mvals are 0-180 convert to a scale - start+bh to star
            	  
               this.ctx.beginPath();
-              this.ctx.arc(this.convert_x(sval),this.convert_y(mval),5,0,2*Math.PI);
               this.ctx.fillStyle = "gray";
+              this.ctx.arc(this.convert_x(sval),this.convert_y(mval),5,0,2*Math.PI);
+        
 			  this.ctx.fill();
 			}
             }
@@ -500,4 +527,5 @@ Your browser does not support the HTML canvas tag.</canvas>
     </html> 
 """
     return webpage
+
 
