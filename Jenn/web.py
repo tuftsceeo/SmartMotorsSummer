@@ -323,6 +323,8 @@ Your browser does not support the HTML canvas tag.</canvas>
                   var xhr = new XMLHttpRequest();
                   xhr.open("GET", "/slider?value="+sliderValue, true);
                   xhr.send();
+                  g.update_motor_val(Number(sliderValue))
+                  g.redraw()
             }
             const gaugeElement = document.querySelector(".gauge");
             setGaugeValue(gaugeElement, 0.5);
@@ -341,7 +343,8 @@ Your browser does not support the HTML canvas tag.</canvas>
                         var tmpArray = ajaxResult.split("|");  
                         document.getElementById("temp").innerHTML = tmpArray[0];
                         updateProgressBar(myProgressBar, parseInt(ajaxResult));
-                        g.update_sensor_val(tmpArray[0])
+                        g.update_sensor_val(Number(tmpArray[0]))
+                        g.redraw()
                      }
                  
                 }  
@@ -448,25 +451,31 @@ Your browser does not support the HTML canvas tag.</canvas>
                 this.gap = 50;
                 
                 this.last_sensor_val = 50;
+                this.last_motor_val = 90;
                 
-               this.draw_axes();
+               this.redraw();
                
    
             }
             
            update_sensor_val(sval){
                this.last_sensor_val = sval;
-               this.redraw();
+           }
+           
+           update_motor_val(mval){
+               this.last_motor_val = mval;
            }
             
            redraw(){
            		console.log("Update graph");
            		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.draw_axes()
+                this.draw_sensorline(this.last_sensor_val);
+                this.draw_motorline(this.last_motor_val);
                 for (var i = 0; i < sensor_array.length; i++) {
                     this.draw_point(sensor_array[i], motor_array[i]) 
                 }
-                this.draw_sensorline(this.last_sensor_val);
+                
            }
            
            convert_x(x){
@@ -487,8 +496,17 @@ Your browser does not support the HTML canvas tag.</canvas>
                 this.ctx.moveTo(this.convert_x(sval), this.convert_y(0));
                 this.ctx.lineTo(this.convert_x(sval), this.convert_y(180));
                 this.ctx.stroke();
+           }
+           draw_motorline(mval){
+                this.ctx.beginPath();
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeStyle = "#85B3DE";
+                this.ctx.moveTo(this.convert_x(0), this.convert_y(mval));
+                this.ctx.lineTo(this.convert_x(100), this.convert_y(mval));
+                this.ctx.stroke();
            
            }
+           
            draw_axes(){
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
