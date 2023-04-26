@@ -360,7 +360,7 @@ Your browser does not support the HTML canvas tag.</canvas>
                 ajaxLoad('getDHT');   
             }
             // Controls how often the sensor is read 
-            setInterval(updateDHT, 500);
+            setInterval(updateDHT, 250);
             
             // add a row to the table
             function addvalue(){
