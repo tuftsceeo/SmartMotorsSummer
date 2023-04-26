@@ -135,7 +135,7 @@ def runData():
     print(pos)
     global global_TEST_motor
     global_TEST_motor = pos
-    motor.write_angle(pos)
+    motor.write_angle(180-pos)
     
 # reads the file where each line is the motor,light data
 # returns [(motor,light), (motor,light)]
@@ -222,5 +222,6 @@ gc.collect()
 display.text("Error encountered", 20,20,1)
 display.show()
 s.close()
+
 
 
