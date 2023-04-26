@@ -519,6 +519,7 @@ Your browser does not support the HTML canvas tag.</canvas>
            draw_axes(){
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
+                this.ctx.strokeStyle = "#e8e8e8";
                  for (var x = 0; x <= 100; x += 20) {
                 //vert lines
                        this.ctx.moveTo(this.convert_x(x), this.convert_y(0));
@@ -529,10 +530,13 @@ Your browser does not support the HTML canvas tag.</canvas>
                       this.ctx.moveTo(this.convert_x(0), this.convert_y(y));
                       this.ctx.lineTo(this.convert_x(100), this.convert_y(y));
                   }
-                  this.ctx.strokeStyle = "black";
                   this.ctx.stroke();
-        this.ctx.font = "15px Arial";
-        this.ctx.strokeText("Sensor Value",120,265);
+                  this.ctx.beginPath();
+                this.ctx.strokeStyle = "#757575";
+                ctx.rect(this.convert_x(0), this.convert_y(0), this.convert_x(100)-this.convert_x(0), this.convert_y(180)-this.convert_y(0));
+                ctx.stroke();
+                this.ctx.font = "15px Arial";
+                this.ctx.strokeText("Sensor Value",120,265);
                 // horizontal axis
                 this.ctx.strokeText("0",20,257);
                 this.ctx.strokeText("100",276,257);
