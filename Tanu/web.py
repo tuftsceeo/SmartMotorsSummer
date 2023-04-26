@@ -531,10 +531,13 @@ Your browser does not support the HTML canvas tag.</canvas>
                       this.ctx.lineTo(this.convert_x(100), this.convert_y(y));
                   }
                   this.ctx.stroke();
-                  this.ctx.beginPath();
+                
+                this.ctx.beginPath();
                 this.ctx.strokeStyle = "#757575";
-                ctx.rect(this.convert_x(0), this.convert_y(0), this.convert_x(100)-this.convert_x(0), this.convert_y(180)-this.convert_y(0));
-                ctx.stroke();
+                this.ctx.rect(this.convert_x(0), this.convert_y(0), this.convert_x(100)-this.convert_x(0), this.convert_y(180)-this.convert_y(0));
+                this.ctx.stroke();
+                
+                this.ctx.beginPath();
                 this.ctx.font = "15px Arial";
                 this.ctx.strokeText("Sensor Value",120,265);
                 // horizontal axis
@@ -577,6 +580,8 @@ Your browser does not support the HTML canvas tag.</canvas>
     </html> 
 """
     return webpage
+
+
 
 
 
