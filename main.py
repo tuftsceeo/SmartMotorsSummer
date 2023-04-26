@@ -1,18 +1,3 @@
-# COM speed 115200
-# with SCL in D1 and SDA in D2
-
-# SSD1306 GUIDE
-#display.contrast(255)
-#display.text('Hello, World!', 0, 0, 1)
-#display.pixel(0, 0, 1)
-#display.pixel(127, 63, 1)
-
-#display.show()
-#display.fill(0)
-#display.show()
-#display.hline(0, 8, 4, 1) # not working
-#display.rect(10, 10, 107, 43, 1) # not working
-
 from machine import Pin, SoftI2C, PWM, ADC
 import time
 import smarttools
@@ -20,23 +5,112 @@ import servo
 import smartfunctions
 
 
+STATE=[[0,3],[0,4],[0,3],[0,3]]
+whereamI=0
+wherewasI=-1
+whenPressed=0
 
+#Defining all flags
+add=False
+delete=False
+save=False
 
+#STATE=[(ICONnumber,TotalIcons),...]
+# First number is ICON - default is 0 or first icon
+# Second is Total number of ICONS in the SCREEN - 3 icons on Homescreen, 2 icons on PlayScreen and so on
+#whereamI gives the SCREEN number I am at
+#STATE[whereamI] gives the selected icon and total number of icons on that screen
+
+#ICON
+#0 - FirstICON
+#1 - SecondICON
+#2- ThirdICON
+
+#SCREEN
+#0 - HOMESCREEN
+#1 - PlaySCREEN
+#2 - TrainSCREEN
+#3 - ConnectSCREEN
 
 
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 display = smarttools.SSD1306_SMART(128, 64, i2c)
 
 
-bup = smarttools.BUTTON(8)
+bdown = smarttools.BUTTON(8)
 bselect = smarttools.BUTTON(9)
-bdown = smarttools.BUTTON(10)
-
-
-
+bup = smarttools.BUTTON(10)
 
 s = servo.Servo(Pin(2))
 
+#interrupt functions
+def decrease(Pin):
+    global whereamI
+    global STATE
+    global whenPressed
+    global changed
+    
+    if(time.ticks_ms()-whenPressed>500):
+        if(STATE[whereamI][0]>0):
+            STATE[whereamI][0]-=1
+        whenPressed=time.ticks_ms()
+        print(STATE[whereamI])
+        display.selector(whereamI,STATE[whereamI][0],STATE[whereamI][0]+1) #draw circle at selection position, and remove from the previous position
+        changed=True
+    
+        
+def selector(Pin):
+    global whereamI
+    global STATE
+    global changed
+    global add
+    global delete
+    global save
+    time.sleep(0.2)
+    if(whereamI==0):
+        if(STATE[0][0]==0):
+            whereamI=1 #training
+        elif(STATE[0][0]==1):
+            whereamI=2 #playing
+        elif(STATE[0][0]==2):
+            whereamI=3 #setup
+        display.fill(0)
+        display.selector(whereamI,STATE[whereamI][0],-1)
+        display.displayscreen(whereamI)
+        
+    elif(whereamI==1):
+        if(STATE[1][0]==0):
+            add=True     #add data point         
+        elif(STATE[1][0]==1):
+            delete=True #delete data point
+        elif(STATE[1][0]==2):
+            save= True #save data to file
+        elif(STATE[1][0]==3):# whereamI set to homescreen
+            whereamI=0 
+        display.fill(0)
+        display.selector(whereamI,STATE[whereamI][0],-1)
+        display.displayscreen(whereamI)
+        changed=True
+    
+
+def increase(Pin):
+    global whereamI
+    global STATE
+    global whenPressed
+    global changed
+
+
+    if(time.ticks_ms()-whenPressed>500):
+        if(STATE[whereamI][0]<STATE[whereamI][1]-1):
+            STATE[whereamI][0]+=1
+        whenPressed=time.ticks_ms()
+        display.selector(whereamI,STATE[whereamI][0],STATE[whereamI][0]-1) #draw circle at selection position, and remove from the previous position
+        changed=True
+    
+#setting interrupts for button presses
+bdown.irq(trigger=Pin.IRQ_RISING, handler=decrease)
+bup.irq(trigger=Pin.IRQ_RISING, handler=increase)
+bselect.irq(trigger=Pin.IRQ_RISING, handler=selector)
 # pot pin GPIO3, A1, D1
 
 pot = ADC(Pin(3))
@@ -55,47 +129,51 @@ def transform(initial, final, value):
     final = ranges[final]
     return int((final[1]-final[0]) / (initial[1]-initial[0]) * (value - initial[0]) + final[0])
 
-
-
-
-
-
 mode = 0
 point = [9,9]
 points = []
 
 
+#setup with homescreen
+#starts with whereamI=0
+display.selector(whereamI,STATE[whereamI][0],-1)
+oldpoint=[-1,-1]
+#display.displayscreen(whereamI)
 
-#display.text('setup', 4, 4, 1)  # its rectangle is ((2, 2), (45, 13))
-#display.text('train', 47, 4, 1) # its rectangle is ((45, 2), (88, 13))
-#display.text('test', 90, 4, 1)  # its rectangle is ((88, 2), (123 13))
-#display.show()
+while True:
 
-
-while(True):
-    bdown.update()
-    bselect.update()
-    bup.update()
-    if bdown.tapped or bselect.held:
-        mode = (mode + 1) % 3
-    if mode == 1:
+    if(whereamI==1): # Training Screen
+        a=[]
+        for i in range(10):
+            a.append(light.read())
+            a.average()
+            
         point = [transform('light', 'oldscreenx', light.read()), transform('pot', 'oldscreeny', pot.read())]
-        s.write_angle(transform('pot', 'motor', pot.read()))
-        if bselect.tapped:
+        
+
+
+        if(add):
             points.append(list(point))
-    elif mode == 2:
-        point = [transform('light', 'oldscreenx', light.read()), -20] 
-        motor_position =  smartfunctions.nearestNeighbor(points, point) #<---added wchurch april 12, 2023
-        # s.write_angle(transform('oldscreeny', 'motor', smartfunctions.nearestNeighbor(points, point)))
-        s.write_angle(transform('oldscreeny', 'motor', motor_position)) #<---modified wchurch april 12, 2023
-        point = [transform('light', 'oldscreenx', light.read()), motor_position]  #<----to show box during testing; added wchurch april 12, 2023
+            print("changed")
+            print(points)
+            
+        elif(delete):
+            if(points): #delete only when there is something
+                points.pop()
+                print(points)
+        elif(save):
+            print("write the points to a file")
+        else:
+            if(not point==oldpoint): #only when point is different now
+                s.write_angle(transform('pot', 'motor', pot.read()))
+                display.graph(oldpoint, point, points)
 
+        #reset all flags
+        add=False
+        delete=False
+        save=False
+        oldpoint=point
 
-    elif mode == 0:
-        pass
-        #point = [transform('light', 'screenx', light.read()), -20]
-        #s.write_angle(transform('screeny', 'motor', smartfunctions.extremeLine(points, point)))
-        #print(transform('screeny', 'motor', smartfunctions.extremeline(points, point)))
-    display.writeall(point, points, mode = mode)
-
-
+        
+    time.sleep(0.001)
+        

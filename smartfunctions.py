@@ -14,7 +14,6 @@ def nearestNeighbor(data, point):
     return test[1]
 
 
-
 def extremeLine(data, point): # Not currently functional
     try:
         point = point[0]
