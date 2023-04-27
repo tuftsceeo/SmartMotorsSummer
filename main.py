@@ -1,3 +1,4 @@
+
 from machine import Pin, SoftI2C, PWM, ADC
 import time
 import smarttools
@@ -113,21 +114,19 @@ bup.irq(trigger=Pin.IRQ_RISING, handler=increase)
 bselect.irq(trigger=Pin.IRQ_RISING, handler=selector)
 # pot pin GPIO3, A1, D1
 
+
 pot = ADC(Pin(3))
 pot.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-# pot.read() returns integers in [0, 4095]
-
-
-# light pin GPIO5
 light = ADC(Pin(5))
 light.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
 
-# plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
+# Create a range mapping function because we seek to plot values of different ranges (poteniometer of 0 to 4095) on the same scale as a range of the motor (0 to 180) and on a different scale for the screen (screenx and screeny)
 ranges = {'pot': [0, 4095], 'light': [0, 4095], 'motor': [0, 180], 'screenx': [4, 123], 'screeny': [59, 20], 'oldscreenx': [4, 78], 'oldscreeny': [59, 4]} # screeny is backwards because it is from top to bottom
 def transform(initial, final, value):
     initial = ranges[initial]
     final = ranges[final]
     return int((final[1]-final[0]) / (initial[1]-initial[0]) * (value - initial[0]) + final[0])
+
 
 mode = 0
 point = [9,9]

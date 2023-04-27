@@ -59,9 +59,6 @@ motor.write_angle(90)
 Sensor = ADC(Pin(5))
 Sensor.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
 
-global_sensor_data = 0
-global_motor_data = 0
-
 # this is the dynamic training data 
 training_data = []
 # this is the training data that is read from the data file 
@@ -69,6 +66,9 @@ training_data_from_file = []
 datafilename = "trainData.txt"
 
 STATE = 1
+
+# during test, saves the motor value associated with the sensor 
+global_TEST_motor = 0
 
 def updateStateTEST():
     global STATE
@@ -84,15 +84,6 @@ def read_sensor():
     sens = str(Sensor.read())
     return sens
 
-def updateSensor(data):
-    global global_sensor_data
-    global_sensor_data = data
-
-def updateMotor(data):
-    global global_motor_data
-    global_motor_data = data
-    print("global motor data changed to...")
-    print(global_motor_data)
 
 # saves training_data to a file trainData.txt
 # each line is motorData,lightSensor
@@ -110,8 +101,9 @@ def saveDataToFile():
 
 def removeData():
     global training_data
-    training_data.pop()
-    saveDataToFile()
+    if(len(training_data) != 0):
+        training_data.pop()
+        saveDataToFile()
 
 # adds (motor, light) pair to training data 
 def addData(motor, light):
@@ -141,7 +133,9 @@ def runData():
     print(sens)
     print("MOTOR VALUE ROTATE TO IS...")
     print(pos)
-    motor.write_angle(pos)
+    global global_TEST_motor
+    global_TEST_motor = pos
+    motor.write_angle(180-pos)
     
 # reads the file where each line is the motor,light data
 # returns [(motor,light), (motor,light)]
@@ -166,32 +160,40 @@ while True:
         request = str(request)
             
         print('Content = %s' % request)
+        
+        if(STATE == 0):
+            runData()
             
         # setting the sensor reading     
         if request.find('/getDHT') == 6:
             t = read_sensor()
             x = int((100 * int(t))/4095)
-            updateSensor(x)
+    
+            # if on testing, then send the nearest motor value 
+            if (STATE == 0):
+                motor_rotation = str(global_TEST_motor)
+            # otherwise send "-1"
+            else:
+                motor_rotation = "-1"
             # set sensor variable
-            reply = str(x) + "|"
-        
-        if(STATE == 0):
-            runData()
+            reply = str(x) + "|" + motor_rotation 
         
         if request.find('/slider') == 6:
             splitval = request.split("=", 1)
             number = splitval[1].split(" ", 1)
             value = number[0]
             motor.write_angle(180-int(value))
-            # set motor variable 
-            updateMotor(180-int(value))
+            
                 
         if request.find('/?addvalue') == 6:
-            # write the data to the file
-            t = read_sensor()
-            x = int((100 * int(t))/4095)
-            updateSensor(x)
-            addData(global_motor_data, global_sensor_data)
+            # request comes in form /?addvalue="+sliderValue+"="+sensorValue
+            split_values = request.split("=", 1)
+            motor_light = split_values[1].split(" ", 1)[0]
+            mot_val_save = motor_light.split("=")[0]
+            lit_val_save = motor_light.split("=")[1]
+            print(mot_val_save)
+            print(lit_val_save)
+            addData(int(mot_val_save), int(lit_val_save))
                 
         # removes the last data from the list    
         if request.find('/?deletevalue') == 6:
@@ -220,4 +222,6 @@ gc.collect()
 display.text("Error encountered", 20,20,1)
 display.show()
 s.close()
+
+
 

@@ -167,40 +167,43 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C): #<-----added framebuf by wchurch 4/12/
         #           26 to 37
         #           42 to 53
         
-    def writewords(self, mode): # <---- WCHURCH ADDED SYMBOL INSTEAD OF WORK 'test'; 4/12/2023)
+    def writewords(self, mode, iterator): # <---- WChurch added iterator 4/19/2023 to help with the animation
         orientation = 'vertical'
-        if orientation == 'vertical':
-            #self.text('edit', 126-8*4, 12, 1)
-            gear_buf = framebuf.FrameBuffer(bytearray(b'\x0f\x00\t\x00p\xe0\x00\x00\x8f\x10I I \x8f\x10\x00\x00p\xe0\t\x00\x0f\x00'), 12, 12, framebuf.MONO_HLSB)
-            self.blit(gear_buf, 140-8*4, 12)
-            #self.text('train', 126-8*5, 28, 1)
-            train_buf = framebuf.FrameBuffer(bytearray(b'\xff\xf0\x00\x10`\x10\x90\x10`\x10\x01\x10F\x10\xf8\x10\xf0\x10\xe3\xf0\xe0\x00\xe0\x00'), 12, 12, framebuf.MONO_HLSB)
-            self.blit(train_buf, 148-8*5, 28) # <---- this line plus previous play_buf declaration added 4/12/2023)
-            # self.text('test', 126-8*4, 44, 1)
-            play_buf = framebuf.FrameBuffer(bytearray(b'\x0f\x00 @@ \x00\x00\x8c\x10\x8a\x10\x89\x10\x8a\x10\x0c\x00@  @\x0f\x00'), 12, 12, framebuf.MONO_HLSB)
-            self.blit(play_buf,138-8*4, 44)  # <---- this line plus previous play_buf declaration added 4/12/2023)
-            if mode == 0:
-                self.rectangle((124 - 8*4, 10), (127, 21))
-            if mode == 1:
-                self.rectangle((124 - 8*5, 26), (127, 37))
-            if mode == 2:
-                self.rectangle((124 - 8*4, 42), (127, 58))
-            #self.text('setup', 125 - 8 * 5, 19, 1)  # its rectangle is ((2, 2), (45, 13))
-            #self.text('train', 125 - 8 * 5, 35, 1) # its rectangle is ((45, 2), (88, 13))
-            #self.text('test',  125 - 8 * 4, 51, 1)  # its rectangle is ((88, 2), (123, 13))
-            #if mode == 0 or mode == 'setup':
-            #    self.rectangle((123 - 8 * 5, 0), (127, 21))
-            #if mode == 1 or mode == 'train':
-            #    self.rectangle((123 - 8 * 5, 26), (127, 37))
-            #if mode == 2 or mode == 'test':
-            #    self.rectangle((123 - 8 * 4, 42), (127, 53))
-        
-        # x from (123 - 8 * letters) to 127
-        # y values: 10 to 21
-        #           26 to 37
-        #           42 to 53
+        zero_or_one = 0 #<----- used to animate a dot showing the mode you are in
+        del_factor = 5 #< ---- used to slow/speed up animation
+        # define framebuffers for graphics
+        gear_buf = framebuf.FrameBuffer(bytearray(b'\x0f\x00\t\x00p\xe0\x00\x00\x8f\x10I I \x8f\x10\x00\x00p\xe0\t\x00\x0f\x00'), 12, 12, framebuf.MONO_HLSB)
+        train_buf = framebuf.FrameBuffer(bytearray(b'\xff\xf0\x00\x10`\x10\x90\x10`\x10\x01\x10F\x10\xf8\x10\xf0\x10\xe3\xf0\xe0\x00\xe0\x00'), 12, 12, framebuf.MONO_HLSB)
+        play_buf = framebuf.FrameBuffer(bytearray(b'\x0f\x00 @@ \x00\x00\x8c\x10\x8a\x10\x89\x10\x8a\x10\x0c\x00@  @\x0f\x00'), 12, 12, framebuf.MONO_HLSB)
+        fb_dot0 = framebuf.FrameBuffer(bytearray(b' P\x88P '), 5, 5, framebuf.MONO_HLSB)
+        fb_dot1 = framebuf.FrameBuffer(bytearray(b'\x00 p \x00'), 5, 5, framebuf.MONO_HLSB)
 
-        elif orientation == 'horizontal':
+        # check orientation and display menu items
+        if orientation == 'vertical':
+            self.blit(gear_buf, 140-8*4, 12)
+            self.blit(train_buf, 148-8*5, 28)
+            self.blit(play_buf,138-8*4, 44)
+
+            # display graphic to show which mode is currently selected
+            if mode == 0:
+                if (iterator%del_factor == 0):
+                    self.blit(fb_dot0,124 - 8*3, 10)
+                else:
+                    self.blit(fb_dot1,124 - 8*3, 10)
+            if mode == 1:
+                if (iterator%del_factor == 0):
+                    self.blit(fb_dot0,124 - 8*3, 26)
+                else: 
+                    self.blit(fb_dot1,124 - 8*3, 26)
+            if mode == 2:
+                if (iterator%del_factor == 0):
+                    self.blit(fb_dot0,124 - 8*3, 42)
+                else:
+                    self.blit(fb_dot1,124 - 8*3, 42)
+                
+        print (iterator)
+
+        if orientation == 'horizontal':
             self.text('setup', 4, 4, 1)  # its rectangle is ((2, 2), (45, 13))
             self.text('train', 47, 4, 1) # its rectangle is ((45, 2), (88, 13))
             self.text('test', 90, 4, 1)  # its rectangle is ((88, 2), (123, 13))
@@ -210,6 +213,8 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C): #<-----added framebuf by wchurch 4/12/
                 self.rectangle((45, 2), (88, 13))
             if mode == 2 or mode == 'test':
                 self.rectangle((88, 2), (123, 13))
+
+        return iterator 
 
 
     def hplot(self, *args):
@@ -237,11 +242,11 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C): #<-----added framebuf by wchurch 4/12/
                     pass
         return None
         
-    def writeall(self, point, points, mode):
+    def writeall(self, point, points, mode, iterator):
 
 
         self.fill(0)
-        self.writewords(mode)
+        self.writewords(mode,iterator)
         orientation = 'vertical'
         if orientation == 'vertical':
             self.rectangle((0, 0), (84, 63))
