@@ -1,7 +1,7 @@
-f=open("main.py","w")
-a='''
+
 from machine import Pin, SoftI2C, PWM, ADC
 import time
+from machine import Timer
 #import smarttools
 import servo
 import icons
@@ -11,6 +11,7 @@ STATE=[[0,3],[0,4],[0,4],[0,3]]
 whereamI=0
 wherewasI=-1
 whenPressed=0
+prev=0
 
 
 
@@ -36,8 +37,8 @@ MAX_BATTERY=2900
 MIN_BATTERY=2600
 #Defining all flags
 #Train screen flags
-add=False
-delete=False
+adddata=False
+deletedata=False
 run=False
 
 #Play screen flags
@@ -55,62 +56,64 @@ bup = Pin(10, Pin.IN)
 s = servo.Servo(Pin(2))
 
 #interrupt functions
-def decrease(Pin):
+def downpressed():
+    time.sleep(0.1)
     global whereamI
     global STATE
     global whenPressed
     global changed
+    global prev
     
     if(time.ticks_ms()-whenPressed>500):
-        if(STATE[whereamI][0]>0):
-            STATE[whereamI][0]-=1
+        print(STATE[whereamI][0])
+        STATE[whereamI][0]=(STATE[whereamI][0]-1)%STATE[whereamI][1]
         whenPressed=time.ticks_ms()
-        display.selector(whereamI,STATE[whereamI][0],STATE[whereamI][0]+1) #draw circle at selection position, and remove from the previous position
+        display.selector(whereamI,STATE[whereamI][0],prev) #draw circle at selection position, and remove from the previous position
+        prev=STATE[whereamI][0]
         changed=True
     
- 
-
-def increase(Pin):
+def uppressed():
+    time.sleep(0.1)
     global whereamI
     global STATE
     global whenPressed
     global changed
+    global prev
 
     if(time.ticks_ms()-whenPressed>500):
-        if(STATE[whereamI][0]<STATE[whereamI][1]-1):
-            STATE[whereamI][0]+=1
+        print(STATE[whereamI][0])
+        STATE[whereamI][0]=(STATE[whereamI][0]+1)%STATE[whereamI][1]
         whenPressed=time.ticks_ms()
-        display.selector(whereamI,STATE[whereamI][0],STATE[whereamI][0]-1) #draw circle at selection position, and remove from the previous position
+        display.selector(whereamI,STATE[whereamI][0],prev) #draw circle at selection position, and remove from the previous position
+        prev=STATE[whereamI][0]
         changed=True
    
-def selector(Pin):
+def selectpressed():
+    time.sleep(0.1)
     #declare all global variables, include all flags
     global whereamI
-    global STATE
-    global changed
-    global add
-    global delete
+    global adddata
+    global deletedata
     global save
-    time.sleep(0.5)
 
     #Home screen
     if(whereamI==0):
         if(STATE[0][0]==0):
             whereamI=1      #Train Screen
         elif(STATE[0][0]==1):
-            whereamI=2      #Play Screen
+            whereamI=2      #select the play Screen   - with choices of dataset
         elif(STATE[0][0]==2):
-            whereamI=3      #Settings Screen
+            whereamI=3      #Settings Screen - ble connection, wifi, etc. 
         display.fill(0)
         display.selector(whereamI,STATE[whereamI][0],-1)
-        display.displayscreen(whereamI)
+        #display.displayscreen(whereamI)
         
     #Train screen
     elif(whereamI==1): 
         if(STATE[1][0]==0):
-            add=True     #add data point         
+            adddata=True     #add data point         
         elif(STATE[1][0]==1):
-            delete=True #delete data point
+            deletedata=True #delete data point
         elif(STATE[1][0]==2):
             whereamI=2 #run using the train data
         elif(STATE[1][0]==3):
@@ -118,12 +121,12 @@ def selector(Pin):
             
         display.fill(0)  #clean screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-        display.displayscreen(whereamI)                  # load relevant screen
+        #display.displayscreen(whereamI)                  # load relevant screen
         
     #Play screen 
     elif(whereamI==2): 
         if(STATE[2][0]==0):
-            add=True        # toggle screeen view     
+            adddata=True        # toggle screeen view     
         elif(STATE[2][0]==1):
             delete=True     # save data
         elif(STATE[2][0]==2):
@@ -133,14 +136,89 @@ def selector(Pin):
         
         display.fill(0) # clear screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-        display.displayscreen(whereamI)                  # load relevant screen
+        #display.displayscreen(whereamI)                  # load relevant screen
         
+#call back to check the button presses
+def check_switch(p):
+    global switch_state_up
+    global switch_state_down
+    global switch_state_select
     
+    global switched_up
+    global switched_down
+    global switched_select
+    
+    global last_switch_state_up
+    global last_switch_state_down
+    global last_switch_state_select
+    
+    switch_state_up = switch_up.value()
+    switch_state_down = switch_down.value()
+    switch_state_select = switch_select.value()
+    
+    
+    if switched_up:
+        if switch_state_up == 1:
+            uppressed()
+        switched_up = False
+    elif switched_down:
+        if switch_state_down == 1:
+            downpressed()
+        switched_down = False
+    elif switched_select:
+        if switch_state_select == 1:
+            selectpressed()
+        switched_select = False
+        
+    if switch_state_up != last_switch_state_up:
+        switched_up = True
+        
+    elif switch_state_down != last_switch_state_down:
+        switched_down = True
+        
+    elif switch_state_select != last_switch_state_select:
+        switched_select = True
+    
+    last_switch_state_up = switch_state_up
+    last_switch_state_down = switch_state_down
+    last_switch_state_select = switch_state_select
+
+
+switch_down = Pin(8, Pin.IN)
+switch_select = Pin(9, Pin.IN)
+switch_up= Pin(10, Pin.IN)
+
+switch_state_up = switch_up.value()
+switch_state_down = switch_down.value()
+switch_state_select = switch_select.value()
+
+last_switch_state_up = switch_state_up
+last_switch_state_down = switch_state_down
+last_switch_state_select = switch_state_select
+
+switched_up = False
+switched_down = False
+switched_select = False
+
+#def getswitch():
+
+
+
+tim = Timer(0)
+tim.init(period=50, mode=Timer.PERIODIC, callback=check_switch)
+
+
+
+
+        
+
   
 #setting interrupts for button presses
+'''  
 bdown.irq(trigger=Pin.IRQ_RISING, handler=decrease)
 bup.irq(trigger=Pin.IRQ_RISING, handler=increase)
 bselect.irq(trigger=Pin.IRQ_RISING, handler=selector)
+'''
 # pot pin GPIO3, A1, D1
 
 pot = ADC(Pin(3))
@@ -170,7 +248,6 @@ def readSensor():
     for i in range(1000):
         l.append(light.read())
         p.append(pot.read())
-        time.sleep(0.00001)
     l.sort()
     p.sort()
     l=l[300:600]
@@ -214,17 +291,18 @@ oldpoint=[-1,-1]
 #display.displayscreen(whereamI)
 oldbattery=1
 while True:
+    #display_battery() #display batter value
     #newbattery=battery.read()
     #display.showbattery(oldbattery,0)
     #display.showbattery(newbattery,1)
     if(whereamI==1): # Training Screen
         point = readSensor() 
-        if(add):
+        if(adddata):
             points.append(list(point))
             display.graph(oldpoint, point, points)
             print(points)
             
-        elif(delete):
+        elif(deletedata):
             if(points): #delete only when there is something
                 points.pop()
 
@@ -238,8 +316,8 @@ while True:
             display.graph(oldpoint, point, points)
 
         #reset all flags
-        add=False
-        delete=False
+        adddata=False
+        deletedata=False
         save=False
         oldpoint=point
 
@@ -273,7 +351,4 @@ while True:
     #time.sleep(1)
     #oldbattery=newbattery
     
-'''
-f.write(a)
-f.close()
 
