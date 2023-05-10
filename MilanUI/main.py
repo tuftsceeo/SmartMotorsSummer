@@ -5,13 +5,16 @@ from machine import Timer
 #import smarttools
 import servo
 import icons
+import os
+import sys
 
 
-STATE=[[0,3],[0,4],[0,4],[0,3]]
+STATE=[[0,3],[0,4],[0,4],[0,4],[0,3]]
 whereamI=0
 wherewasI=-1
 whenPressed=0
 prev=0
+loaddatanumber=0
 
 
 
@@ -44,6 +47,12 @@ run=False
 #Play screen flags
 toggle=False
 pause=False
+
+#Load screen flags
+prev=False
+nxt=False
+load=False
+
 
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 display = icons.SSD1306_SMART(128, 64, i2c)
@@ -89,7 +98,8 @@ def uppressed():
         changed=True
    
 def selectpressed():
-    time.sleep(0.1)
+    global points
+    time.sleep(0.3)
     #declare all global variables, include all flags
     global whereamI
     global adddata
@@ -101,9 +111,9 @@ def selectpressed():
         if(STATE[0][0]==0):
             whereamI=1      #Train Screen
         elif(STATE[0][0]==1):
-            whereamI=2      #select the play Screen   - with choices of dataset
+            whereamI=3      #select the play Screen   - with choices of dataset
         elif(STATE[0][0]==2):
-            whereamI=3      #Settings Screen - ble connection, wifi, etc. 
+            whereamI=4     #Settings Screen - ble connection, wifi, etc. 
         display.fill(0)
         display.selector(whereamI,STATE[whereamI][0],-1)
         #display.displayscreen(whereamI)
@@ -118,8 +128,10 @@ def selectpressed():
             whereamI=2 #run using the train data
         elif(STATE[1][0]==3):
             whereamI=0 # go back to homescreen
+            display.fill(0) # clear screen
+            points=[]
             
-        display.fill(0)  #clean screen
+        #display.fill(0)  #clean screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
         #display.displayscreen(whereamI)                  # load relevant screen
         
@@ -128,11 +140,30 @@ def selectpressed():
         if(STATE[2][0]==0):
             adddata=True        # toggle screeen view     
         elif(STATE[2][0]==1):
-            delete=True     # save data
+            save=True     # save data
         elif(STATE[2][0]==2):
             whereamI=2      # pause the run 
         elif(STATE[2][0]==3):
             whereamI=0      # Go back to home screen
+            display.fill(0) # clear screen
+            points=[]
+        
+        #display.fill(0) # clear screen
+        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
+        #display.displayscreen(whereamI)                  # load relevant screen
+        
+    #Load screen 
+    elif(whereamI==3): 
+        if(STATE[2][0]==0):
+            prev=True        # show previous data  
+        elif(STATE[2][0]==1):
+            nxt=True     #  show next data
+        elif(STATE[2][0]==2):
+            load=True     # load the current data
+        elif(STATE[2][0]==3):
+            whereamI=0      # Go back to home screen
+            display.fill(0) # clear screen
+            points=[]
         
         display.fill(0) # clear screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
@@ -258,13 +289,45 @@ def readSensor():
     point = avlight, mappot(avpos)
     return point
 
-def savetofile(points):
-    f=open("data.py","w")
-    f.write("tada")
-    f.close()
+def savetofile(pointstosave):
+    import os
+    if(os.listdir().count('data.py')):
+        import data
+        del sys.modules["data"]
+        import data
+        try:
+            datapoints=data.points.append(pointstosave)
+            print("file exists")
+        except:
+            datapoints=pointstosave
+        del sys.modules["data"]
+        #getting ready to reimporting data file
+    else:
+        datapoints=pointstosave
+        print("new file")
+    #writing files to the data.py
     
+    f=open("data.py","w")
+    print("created file")
+    f.write("points="+str(datapoints)+"\r\n")
+    print("wrote file")
+    f.close()
+    print("closed file")
+
+    
+def readfile():
+    import os
+    if(os.listdir().count('data.py')):
+        import data
+        return(data.points)
+    else:
+        return([])
+
+
 
 def nearestNeighbor(data, point):
+    print("data",data)
+    print("point",point)
     try:
         point = point[0]
     except TypeError:
@@ -295,17 +358,16 @@ while True:
     #newbattery=battery.read()
     #display.showbattery(oldbattery,0)
     #display.showbattery(newbattery,1)
+    
     if(whereamI==1): # Training Screen
         point = readSensor() 
         if(adddata):
             points.append(list(point))
             display.graph(oldpoint, point, points)
-            print(points)
             
         elif(deletedata):
             if(points): #delete only when there is something
                 points.pop()
-
                 
         elif(run):
             whereamI=2 # trigger play screen
@@ -323,9 +385,10 @@ while True:
 
     elif(whereamI==2): # Play Screen
         point=readSensor()
+        print("points",points)
         
         if(toggle):
-            # put toggle function here
+            # put toggle function here - create a dashboard view
             pass
             
         elif(save):
@@ -339,15 +402,49 @@ while True:
             
         if(not point==oldpoint): #only when point is different now
             point = nearestNeighbor(points,point)
-            print(point)
+            print("playscreen point",point)
             s.write_angle(point[1])
             display.graph(oldpoint, point, points)
-
-        #reset all flags
-        add=False
-        delete=False
-        save=False
+    
         oldpoint=point
+        #reset all flags
+        toggle=False
+        save=False
+        pause=False
+
+    
+    elif(whereamI==3): # Load saved files screen
+        point=readSensor()
+        datapoints=readfile()
+        numberofdata=len(datapoints)
+        print(datapoints)
+        if(prev):
+            loaddatanumber=((loaddatanumber-1)%numberofdata) 
+            points=datapoints[loaddatanumber]
+            
+        elif(nxt):
+            loaddatanumber=((loaddatanumber+1)%numberofdata)
+            points=datapoints[loaddatanumber]
+            # save function here
+            savetofile(points)
+                
+        elif(load):
+            #pause the data
+            pass
+   
+        if(not point==oldpoint): #only when point is different now
+            point = nearestNeighbor(points,point)
+            print("point",point)
+            s.write_angle(point[1])
+            display.graph(oldpoint, point, points)
+    
+        oldpoint=point
+        #reset all flags
+        prev=False
+        nxt=False
+        load=False
+
+
     #time.sleep(1)
     #oldbattery=newbattery
     
