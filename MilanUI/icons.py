@@ -140,3 +140,4 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
             self.fill_rect(x-int(dotsize/2),y-int(dotsize/2),dotsize,dotsize,1)
         self.show()
 
+

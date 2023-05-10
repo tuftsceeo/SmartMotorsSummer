@@ -74,12 +74,13 @@ def downpressed():
     global prev
     
     if(time.ticks_ms()-whenPressed>500):
-        print(STATE[whereamI][0])
+        print("prev state",STATE[whereamI][0])
         STATE[whereamI][0]=(STATE[whereamI][0]-1)%STATE[whereamI][1]
         whenPressed=time.ticks_ms()
         display.selector(whereamI,STATE[whereamI][0],prev) #draw circle at selection position, and remove from the previous position
         prev=STATE[whereamI][0]
         changed=True
+        print("current state",STATE[whereamI][0])
     
 def uppressed():
     time.sleep(0.1)
@@ -90,21 +91,30 @@ def uppressed():
     global prev
 
     if(time.ticks_ms()-whenPressed>500):
-        print(STATE[whereamI][0])
+        print("prev state",STATE[whereamI][0])
         STATE[whereamI][0]=(STATE[whereamI][0]+1)%STATE[whereamI][1]
         whenPressed=time.ticks_ms()
         display.selector(whereamI,STATE[whereamI][0],prev) #draw circle at selection position, and remove from the previous position
         prev=STATE[whereamI][0]
         changed=True
+        print("current state",STATE[whereamI][0])
    
 def selectpressed():
     global points
     time.sleep(0.3)
     #declare all global variables, include all flags
     global whereamI
+    global state
+    global whenPressed
     global adddata
     global deletedata
     global save
+    global run
+    global toggle
+    global pause
+    global prev
+    global nxt
+    global load
 
     #Home screen
     if(whereamI==0):
@@ -120,16 +130,14 @@ def selectpressed():
         
     #Train screen
     elif(whereamI==1): 
-        if(STATE[1][0]==0):
-            adddata=True     #add data point         
-        elif(STATE[1][0]==1):
-            deletedata=True #delete data point
-        elif(STATE[1][0]==2):
-            whereamI=2 #run using the train data
-        elif(STATE[1][0]==3):
-            whereamI=0 # go back to homescreen
-            display.fill(0) # clear screen
-            points=[]
+        if(STATE[1][0]==0): #add data point    
+            adddata=True         
+        elif(STATE[1][0]==1):#delete data point
+            deletedata=True 
+        elif(STATE[1][0]==2): #run using the train data
+            whereamI=2
+        elif(STATE[1][0]==3): # go back to homescreen
+            resettohome()
             
         #display.fill(0)  #clean screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
@@ -137,16 +145,14 @@ def selectpressed():
         
     #Play screen 
     elif(whereamI==2): 
-        if(STATE[2][0]==0):
-            adddata=True        # toggle screeen view     
-        elif(STATE[2][0]==1):
-            save=True     # save data
-        elif(STATE[2][0]==2):
-            whereamI=2      # pause the run 
-        elif(STATE[2][0]==3):
-            whereamI=0      # Go back to home screen
-            display.fill(0) # clear screen
-            points=[]
+        if(STATE[2][0]==0):# toggle screeen view     
+            adddata=True        
+        elif(STATE[2][0]==1):     # save data
+            save=True
+        elif(STATE[2][0]==2): # pause the run 
+            whereamI=2     
+        elif(STATE[2][0]==3):#go home
+            resettohome()
         
         #display.fill(0) # clear screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
@@ -160,16 +166,26 @@ def selectpressed():
             nxt=True     #  show next data
         elif(STATE[2][0]==2):
             load=True     # load the current data
-        elif(STATE[2][0]==3):
-            whereamI=0      # Go back to home screen
-            display.fill(0) # clear screen
-            points=[]
+        elif(STATE[2][0]==3):#go home
+            resettohome()
+
         
         display.fill(0) # clear screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
         #display.displayscreen(whereamI)                  # load relevant screen
         
 #call back to check the button presses
+        
+def  resettohome():
+    global whereamI
+    global STATE
+    global points
+    global prev
+    whereamI=0      
+    STATE[0][0]==0
+    display.fill(0) # clear screen
+    points=[]
+    prev=0
 def check_switch(p):
     global switch_state_up
     global switch_state_down
@@ -188,6 +204,18 @@ def check_switch(p):
     switch_state_select = switch_select.value()
     
     
+
+        
+    if switch_state_up != last_switch_state_up:
+        switched_up = True
+        
+    elif switch_state_down != last_switch_state_down:
+        switched_down = True
+        
+    elif switch_state_select != last_switch_state_select:
+        switched_select = True
+        
+        
     if switched_up:
         if switch_state_up == 1:
             uppressed()
@@ -200,15 +228,6 @@ def check_switch(p):
         if switch_state_select == 1:
             selectpressed()
         switched_select = False
-        
-    if switch_state_up != last_switch_state_up:
-        switched_up = True
-        
-    elif switch_state_down != last_switch_state_down:
-        switched_down = True
-        
-    elif switch_state_select != last_switch_state_select:
-        switched_select = True
     
     last_switch_state_up = switch_state_up
     last_switch_state_down = switch_state_down
@@ -358,9 +377,8 @@ while True:
     #newbattery=battery.read()
     #display.showbattery(oldbattery,0)
     #display.showbattery(newbattery,1)
-    
+    point = readSensor()
     if(whereamI==1): # Training Screen
-        point = readSensor() 
         if(adddata):
             points.append(list(point))
             display.graph(oldpoint, point, points)
@@ -383,10 +401,7 @@ while True:
         save=False
         oldpoint=point
 
-    elif(whereamI==2): # Play Screen
-        point=readSensor()
-        print("points",points)
-        
+    elif(whereamI==2): # Play Screen        
         if(toggle):
             # put toggle function here - create a dashboard view
             pass
@@ -414,7 +429,6 @@ while True:
 
     
     elif(whereamI==3): # Load saved files screen
-        point=readSensor()
         datapoints=readfile()
         numberofdata=len(datapoints)
         print(datapoints)
@@ -444,7 +458,7 @@ while True:
         nxt=False
         load=False
 
-
+    oldpoint=point
     #time.sleep(1)
     #oldbattery=newbattery
     
