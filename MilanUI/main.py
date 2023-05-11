@@ -53,6 +53,8 @@ prev=False
 nxt=False
 load=False
 
+#mainloop flags
+clearscreen=False
 
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 display = icons.SSD1306_SMART(128, 64, i2c)
@@ -115,6 +117,7 @@ def selectpressed():
     global prev
     global nxt
     global load
+    global clearscreen
     #iconFrames=[[fb_Train,fb_Play,fb_Setting],[fb_add,fb_delete,fb_smallplay,fb_home],[fb_save,fb_pause,fb_home,fb_toggle],[fb_next,fb_home,fb_toggle]]
     #Home screen
     if(whereamI==0):
@@ -135,9 +138,14 @@ def selectpressed():
         elif(STATE[1][0]==1):#delete data point
             deletedata=True 
         elif(STATE[1][0]==2): #run using the train data
-            whereamI=2
+            if (points):
+                whereamI=2
+            else:
+                display.showmessage("No data to run")
+                clearscreen=True
         elif(STATE[1][0]==3): # go back to homescreen
             resettohome()
+            clearscreen=True
 
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
 
@@ -149,7 +157,8 @@ def selectpressed():
         elif(STATE[2][0]==1):  # pause the run 
             pause=True  
         elif(STATE[2][0]==2): #go home
-            resettohome()    
+            resettohome()
+            clearscreen=True
         elif(STATE[2][0]==3):# toggle screeen view
             toggle=True
         
@@ -165,7 +174,8 @@ def selectpressed():
             deletedata=True
             print("button pressed")
         elif(STATE[3][0]==2): #go home
-            resettohome()    
+            resettohome()
+            clearscreen=True
         elif(STATE[3][0]==3): #toggle
             toggle=True     
         
@@ -182,7 +192,7 @@ def resettohome():
     global prev
     whereamI=0      
     STATE=[[0,3],[0,4],[0,4],[0,4],[0,4]]
-    display.fill(0) # clear screen
+    #display.fill(0) # clear screen
     points=[]
     prev=0
     
@@ -343,6 +353,7 @@ def replacefile(pointstosave):
 
     
 def readfile():
+    global clearscreen
     import os
     if(os.listdir().count('data.py')):
         import data
@@ -350,13 +361,13 @@ def readfile():
             return(data.points)
         else:
             display.showmessage("No data saved")
-            time.sleep(2)
             resettohome()
+            clearscreen=True
             return([])
     else:
         display.showmessage("No data saved")
-        time.sleep(2)
         resettohome()
+        clearscreen=True
         return([])
     
         #also make this go home
@@ -397,6 +408,8 @@ while True:
     #display.showbattery(oldbattery,0)
     #display.showbattery(newbattery,1)
     point = readSensor()
+
+        
     if(whereamI==1): # Training Screen
         if(adddata):
             points.append(list(point))
@@ -437,8 +450,8 @@ while True:
             
             
         if(not point==oldpoint): #only when point is different now
+            
             point = nearestNeighbor(points,point)
-            #print("playscreen point",point)
             s.write_angle(point[1])
             display.graph(oldpoint, point, points)
     
@@ -470,7 +483,6 @@ while True:
                 pass
        
             if(not point==oldpoint): #only when point is different now
-                print(point,points,"are the points")
                 point = nearestNeighbor(points,point)
                 s.write_angle(point[1])
                 display.graph(oldpoint, point, points)
@@ -485,5 +497,11 @@ while True:
     oldpoint=point
     #time.sleep(1)
     #oldbattery=newbattery
+    if clearscreen:
+        #display.clearscreen()
+        display.fill(0)
+        display.selector(whereamI,STATE[whereamI][0],-1)
+        clearscreen=False
+        print("I was called")
     
 

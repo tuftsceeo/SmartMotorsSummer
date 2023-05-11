@@ -149,4 +149,7 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         self.rect(0,20,100,20,0)
         self.text(msg,1,30,1)
         self.show()
+        time.sleep(2)
+        self.fill(0)
+        self.show()
 
