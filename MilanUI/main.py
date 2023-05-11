@@ -181,7 +181,7 @@ def resettohome():
     global points
     global prev
     whereamI=0      
-    STATE[0][0]==0
+    STATE=[[0,3],[0,4],[0,4],[0,4],[0,4]]
     display.fill(0) # clear screen
     points=[]
     prev=0
@@ -318,10 +318,6 @@ def savetofile(pointstosave):
         try:
             datapoints=data.points
             datapoints.append(pointstosave)
-            print("datatosave",pointstosave)
-            print("newlycreatedappend =",datapoints)
-            
-            print("file exists")
         except:
             datapoints.append(pointstosave)
         del sys.modules["data"]
@@ -333,26 +329,16 @@ def savetofile(pointstosave):
     #writing files to the data.py
     
     f=open("data.py","w")
-    print("created file")
-    print("abouttowrite =",datapoints)
     f.write("points="+str(datapoints)+"\r\n")
-    print("wrote file")
     f.close()
-    print("closed file")
-
 
 def replacefile(pointstosave):
     import os
     if(os.listdir().count('data.py')):
         f=open("data.py","w")
-        print("created file")
-        print("abouttowrite =",datapoints)
         f.write("points="+str(pointstosave)+"\r\n")
-        print("wrote file")
         f.close()
-        print("closed file")
     else:
-        print("Error")
         return 0
 
     
@@ -360,9 +346,16 @@ def readfile():
     import os
     if(os.listdir().count('data.py')):
         import data
-        return(data.points)
+        if(data.points):
+            return(data.points)
+        else:
+            display.showmessage("No data saved")
+            time.sleep(2)
+            resettohome()
+            return([])
     else:
-        #display no data is saved for 2 seconds
+        display.showmessage("No data saved")
+        time.sleep(2)
         resettohome()
         return([])
     
@@ -458,35 +451,36 @@ while True:
     
     elif(whereamI==3): # Load saved files screen
         datapoints=readfile()
-        numberofdata=len(datapoints)
-        points=datapoints[filenumber]
-        if(nxt):
-            filenumber=((filenumber+1)%numberofdata)
+        if(datapoints):
+            numberofdata=len(datapoints)
             points=datapoints[filenumber]
-            display.cleargraph()
-        elif(deletedata):
-            del datapoints[filenumber]
-            replacefile(datapoints)
-            filenumber=0
-            display.cleargraph()
-            
+            if(nxt):
+                filenumber=((filenumber+1)%numberofdata)
+                points=datapoints[filenumber]
+                display.cleargraph()
+            elif(deletedata):
+                del datapoints[filenumber]
+                replacefile(datapoints)
+                filenumber=0
+                display.cleargraph()
+                
 
-        elif(toggle):
-            #toggle the screen
-            pass
-   
-        if(not point==oldpoint): #only when point is different now
-            print(point,points,"are the points")
-            point = nearestNeighbor(points,point)
-            s.write_angle(point[1])
-            display.graph(oldpoint, point, points)
+            elif(toggle):
+                #toggle the screen
+                pass
+       
+            if(not point==oldpoint): #only when point is different now
+                print(point,points,"are the points")
+                point = nearestNeighbor(points,point)
+                s.write_angle(point[1])
+                display.graph(oldpoint, point, points)
+                
+            oldpoint=point
+            #reset all flags
             
-        oldpoint=point
-        #reset all flags
-        
-        deletedata=False
-        nxt=False
-        toggle=False
+            deletedata=False
+            nxt=False
+            toggle=False
 
     oldpoint=point
     #time.sleep(1)
