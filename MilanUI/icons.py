@@ -66,7 +66,7 @@ fb_next = framebuf.FrameBuffer(bytearray(b'\xff\xff\xff\x80\x80\x00\x00\x80\x80\
 fb_load = framebuf.FrameBuffer(bytearray(b'\xff\xff\xff\x80\x80\x00\x00\x80\x80\x7f\x00\x80\x80\x7f\x00\x80\x80\x7f\x00\x80\x80\x7f\x00\x80\x80\x7f\x00\x80\x80\x7f\x00\x80\x80\x7f\x00\x80\x80\x7f\x00\x80\x83\xff\xe0\x80\x81\xff\xc0\x80\xb0\xff\x86\x80\xb0\xff\x86\x80\xb0\x7f\x06\x80\xb0>\x06\x80\xb0>\x06\x80\xb0\x1c\x06\x80\xb0\x18\x06\x80\xb0\x08\x06\x80\xbf\xff\xfe\x80\xbf\xff\xfe\x80\x80\x00\x00\x80\x80\x00\x00\x80\xff\xff\xff\x80'), 25, 25, framebuf.MONO_HLSB)
 
 #Add the icons to the array, add iconsizes add the direction 0 - horizontal , 1 - vertical
-iconFrames=[[fb_Train,fb_Play,fb_Setting],[fb_add,fb_delete,fb_smallplay,fb_back],[fb_pause,fb_save,fb_toggle,fb_home],[fb_prev, fb_next,fb_load,fb_back]]
+iconFrames=[[fb_Train,fb_Play,fb_Setting],[fb_add,fb_delete,fb_smallplay,fb_home],[fb_save,fb_pause,fb_home,fb_toggle],[fb_next,fb_delete,fb_home,fb_toggle]]
 iconSize=[32,25,25,25]
 offsets= [(5,20),(102,29),(102,29),(102,29)] #where you want to display your first icon
 direction=[0,1,1,1]                # 0 horizonal and 1 vertical arrangement
@@ -112,8 +112,7 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         self.text(str(batterylevel),1,40,on)
         self.show()
         
-    def box(self,on, point,size):
-        self.rect
+
     
     def transform(self,initial, final, value):
         initial = self.ranges[initial]
@@ -139,5 +138,9 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
             y=self.transform('motor','screeny',y)
             self.fill_rect(x-int(dotsize/2),y-int(dotsize/2),dotsize,dotsize,1)
         self.show()
+    
+    def cleargraph(self):
+        self.fill_rect(1,1,98,62,0)
+        self.rect(0,0,100,64,1)
 
-
+        

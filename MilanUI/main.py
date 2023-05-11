@@ -9,12 +9,12 @@ import os
 import sys
 
 
-STATE=[[0,3],[0,4],[0,4],[0,4],[0,3]]
+STATE=[[0,3],[0,4],[0,4],[0,4],[0,4]]
 whereamI=0
 wherewasI=-1
 whenPressed=0
 prev=0
-loaddatanumber=0
+filenumber=0
 
 
 
@@ -115,7 +115,7 @@ def selectpressed():
     global prev
     global nxt
     global load
-
+    #iconFrames=[[fb_Train,fb_Play,fb_Setting],[fb_add,fb_delete,fb_smallplay,fb_home],[fb_save,fb_pause,fb_home,fb_toggle],[fb_next,fb_home,fb_toggle]]
     #Home screen
     if(whereamI==0):
         if(STATE[0][0]==0):
@@ -138,45 +138,44 @@ def selectpressed():
             whereamI=2
         elif(STATE[1][0]==3): # go back to homescreen
             resettohome()
-            
-        #display.fill(0)  #clean screen
+
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-        #display.displayscreen(whereamI)                  # load relevant screen
+
         
     #Play screen 
     elif(whereamI==2): 
-        if(STATE[2][0]==0):# toggle screeen view     
-            adddata=True        
-        elif(STATE[2][0]==1):     # save data
-            save=True
-        elif(STATE[2][0]==2): # pause the run 
-            whereamI=2     
-        elif(STATE[2][0]==3):#go home
-            resettohome()
+        if(STATE[2][0]==0): # save data
+            save=True    
+        elif(STATE[2][0]==1):  # pause the run 
+            pause=True  
+        elif(STATE[2][0]==2): #go home
+            resettohome()    
+        elif(STATE[2][0]==3):# toggle screeen view
+            toggle=True
         
-        #display.fill(0) # clear screen
-        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-        #display.displayscreen(whereamI)                  # load relevant screen
-        
-    #Load screen 
-    elif(whereamI==3): 
-        if(STATE[2][0]==0):
-            prev=True        # show previous data  
-        elif(STATE[2][0]==1):
-            nxt=True     #  show next data
-        elif(STATE[2][0]==2):
-            load=True     # load the current data
-        elif(STATE[2][0]==3):#go home
-            resettohome()
 
+        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
+
+        
+    #Play the files screen 
+    elif(whereamI==3): 
+        if(STATE[3][0]==0): # show next data 
+            nxt=True
+        elif(STATE[3][0]==1): #delete dataset
+            deletedata=True
+            print("button pressed")
+        elif(STATE[3][0]==2): #go home
+            resettohome()    
+        elif(STATE[3][0]==3): #toggle
+            toggle=True     
         
         display.fill(0) # clear screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-        #display.displayscreen(whereamI)                  # load relevant screen
+
         
 #call back to check the button presses
         
-def  resettohome():
+def resettohome():
     global whereamI
     global STATE
     global points
@@ -186,6 +185,7 @@ def  resettohome():
     display.fill(0) # clear screen
     points=[]
     prev=0
+    
 def check_switch(p):
     global switch_state_up
     global switch_state_down
@@ -312,26 +312,48 @@ def savetofile(pointstosave):
     import os
     if(os.listdir().count('data.py')):
         import data
+        datapoints=[]
         del sys.modules["data"]
         import data
         try:
-            datapoints=data.points.append(pointstosave)
+            datapoints=data.points
+            datapoints.append(pointstosave)
+            print("datatosave",pointstosave)
+            print("newlycreatedappend =",datapoints)
+            
             print("file exists")
         except:
-            datapoints=pointstosave
+            datapoints.append(pointstosave)
         del sys.modules["data"]
         #getting ready to reimporting data file
     else:
-        datapoints=pointstosave
+        datapoints=[]
+        datapoints.append(pointstosave)
         print("new file")
     #writing files to the data.py
     
     f=open("data.py","w")
     print("created file")
+    print("abouttowrite =",datapoints)
     f.write("points="+str(datapoints)+"\r\n")
     print("wrote file")
     f.close()
     print("closed file")
+
+
+def replacefile(pointstosave):
+    import os
+    if(os.listdir().count('data.py')):
+        f=open("data.py","w")
+        print("created file")
+        print("abouttowrite =",datapoints)
+        f.write("points="+str(pointstosave)+"\r\n")
+        print("wrote file")
+        f.close()
+        print("closed file")
+    else:
+        print("Error")
+        return 0
 
     
 def readfile():
@@ -340,13 +362,17 @@ def readfile():
         import data
         return(data.points)
     else:
+        #display no data is saved for 2 seconds
+        resettohome()
         return([])
+    
+        #also make this go home
 
 
 
 def nearestNeighbor(data, point):
-    print("data",data)
-    print("point",point)
+    #print("data",data)
+    #print("point",point)
     try:
         point = point[0]
     except TypeError:
@@ -386,6 +412,8 @@ while True:
         elif(deletedata):
             if(points): #delete only when there is something
                 points.pop()
+            display.cleargraph()
+            display.graph(oldpoint, point, points)
                 
         elif(run):
             whereamI=2 # trigger play screen
@@ -417,7 +445,7 @@ while True:
             
         if(not point==oldpoint): #only when point is different now
             point = nearestNeighbor(points,point)
-            print("playscreen point",point)
+            #print("playscreen point",point)
             s.write_angle(point[1])
             display.graph(oldpoint, point, points)
     
@@ -431,32 +459,34 @@ while True:
     elif(whereamI==3): # Load saved files screen
         datapoints=readfile()
         numberofdata=len(datapoints)
-        print(datapoints)
-        if(prev):
-            loaddatanumber=((loaddatanumber-1)%numberofdata) 
-            points=datapoints[loaddatanumber]
+        points=datapoints[filenumber]
+        if(nxt):
+            filenumber=((filenumber+1)%numberofdata)
+            points=datapoints[filenumber]
+            display.cleargraph()
+        elif(deletedata):
+            del datapoints[filenumber]
+            replacefile(datapoints)
+            filenumber=0
+            display.cleargraph()
             
-        elif(nxt):
-            loaddatanumber=((loaddatanumber+1)%numberofdata)
-            points=datapoints[loaddatanumber]
-            # save function here
-            savetofile(points)
-                
-        elif(load):
-            #pause the data
+
+        elif(toggle):
+            #toggle the screen
             pass
    
         if(not point==oldpoint): #only when point is different now
+            print(point,points,"are the points")
             point = nearestNeighbor(points,point)
-            print("point",point)
             s.write_angle(point[1])
             display.graph(oldpoint, point, points)
-    
+            
         oldpoint=point
         #reset all flags
-        prev=False
+        
+        deletedata=False
         nxt=False
-        load=False
+        toggle=False
 
     oldpoint=point
     #time.sleep(1)
