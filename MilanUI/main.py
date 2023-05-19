@@ -35,9 +35,7 @@ filenumber=0
 #2 - TrainSCREEN
 #3 - ConnectSCREEN
 
-#Battery
-MAX_BATTERY=2900
-MIN_BATTERY=2600
+
 #Defining all flags
 #Train screen flags
 adddata=False
@@ -126,7 +124,8 @@ def selectpressed():
         elif(STATE[0][0]==1):
             whereamI=3      #select the play Screen   - with choices of dataset
         elif(STATE[0][0]==2):
-            whereamI=4     #Settings Screen - ble connection, wifi, etc. 
+            display.showmessage("Coming soon")
+            #whereamI=4     #Settings Screen - ble connection, wifi, etc. 
         display.fill(0)
         display.selector(whereamI,STATE[whereamI][0],-1)
         #display.displayscreen(whereamI)
@@ -260,14 +259,16 @@ switched_up = False
 switched_down = False
 switched_select = False
 
-#def getswitch():
 
 
 
-tim = Timer(0)
-tim.init(period=50, mode=Timer.PERIODIC, callback=check_switch)
 
-
+def displaybatt(p):
+    batterycharge=battery.read()
+    print(batterycharge)
+    #display.showmessage(str(batterycharge))
+    display.showbattery(batterycharge)
+    
 
 
         
@@ -296,9 +297,26 @@ battery.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
 
 # plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
 
+display.welcomemessage()
+
+
+tim = Timer(0)
+tim.init(period=50, mode=Timer.PERIODIC, callback=check_switch)
+batt = Timer(2)
+batt.init(period=500, mode=Timer.PERIODIC, callback=displaybatt)
+
+
+
+
 def mappot(value):
     initial = [0, 4095]
     final =  [0, 180]
+    return int((final[1]-final[0]) / (initial[1]-initial[0]) * (value - initial[0]) + final[0])
+
+
+def fakebattery(value):
+    initial = [0, 180]
+    final =  [2600, 2900]
     return int((final[1]-final[0]) / (initial[1]-initial[0]) * (value - initial[0]) + final[0])
 
 
@@ -393,21 +411,26 @@ def nearestNeighbor(data, point):
     return test
 
 
+
+
+
+
 point = [9,9]
 points = []
 
 #setup with homescreen
 #starts with whereamI=0
+
 display.selector(whereamI,STATE[whereamI][0],-1)
 oldpoint=[-1,-1]
 #display.displayscreen(whereamI)
 oldbattery=1
+
 while True:
     #display_battery() #display batter value
-    #newbattery=battery.read()
-    #display.showbattery(oldbattery,0)
-    #display.showbattery(newbattery,1)
+
     point = readSensor()
+
 
         
     if(whereamI==1): # Training Screen
