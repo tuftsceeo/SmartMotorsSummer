@@ -1,4 +1,6 @@
 
+
+
 from machine import Pin, SoftI2C, PWM, ADC
 import time
 from machine import Timer
@@ -7,15 +9,22 @@ import servo
 import icons
 import os
 import sys
+import ubinascii
+import machine
+
+#unique name 
+ID= ubinascii.hexlify(machine.unique_id()).decode()
 
 
-STATE=[[0,3],[0,4],[0,4],[0,4],[0,4]]
+STATE=[[0,3],[0,4],[0,4],[0,4],[0,3]] #[homescreen, trainscreen, playscreen, playthefilesscreen, settingsscreen]
 whereamI=0
 wherewasI=-1
 whenPressed=0
 prev=0
 filenumber=0
 
+point = [9,9]
+points = []
 
 
 #STATE=[(ICONnumber,TotalIcons),...]
@@ -33,7 +42,8 @@ filenumber=0
 #0 - HOMESCREEN
 #1 - PlaySCREEN
 #2 - TrainSCREEN
-#3 - ConnectSCREEN
+#3 - Playthefiles
+#4 - ConnectSCREEN
 
 
 #Defining all flags
@@ -46,10 +56,29 @@ run=False
 toggle=False
 pause=False
 
-#Load screen flags
+#Play files screen flags
 prev=False
 nxt=False
 load=False
+
+#Settings screen flags
+leader=False
+follower=False
+
+
+#switch flags
+switch_state_up = False 
+switch_state_down = False 
+switch_state_select = False 
+
+last_switch_state_up = False
+last_switch_state_down = False
+last_switch_state_select = False
+
+switched_up = False
+switched_down = False
+switched_select = False
+
 
 #mainloop flags
 clearscreen=False
@@ -58,47 +87,62 @@ i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 display = icons.SSD1306_SMART(128, 64, i2c)
 
 
-bdown = Pin(8, Pin.IN)
-bselect = Pin(9, Pin.IN)
-bup = Pin(10, Pin.IN)
 
+#define buttons , sensors and motors
+#servo
 s = servo.Servo(Pin(2))
 
+#nav switches
+switch_down = Pin(8, Pin.IN)
+switch_select = Pin(9, Pin.IN)
+switch_up= Pin(10, Pin.IN)
+
+
+# pot pin GPIO3, A1, D1
+pot = ADC(Pin(3))
+pot.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
+# pot.read() returns integers in [0, 4095]
+
+
+# light pin GPIO5
+light = ADC(Pin(5))
+light.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
+
+
+battery = ADC(Pin(4))
+battery.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
+
+# plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
+
+
+
+
 #interrupt functions
-def downpressed():
+def downpressed(count=-1):
     time.sleep(0.1)
-    global whereamI
-    global STATE
-    global whenPressed
-    global changed
-    global prev
-    
     if(time.ticks_ms()-whenPressed>500):
-        print("prev state",STATE[whereamI][0])
-        STATE[whereamI][0]=(STATE[whereamI][0]-1)%STATE[whereamI][1]
-        whenPressed=time.ticks_ms()
-        display.selector(whereamI,STATE[whereamI][0],prev) #draw circle at selection position, and remove from the previous position
-        prev=STATE[whereamI][0]
-        changed=True
-        print("current state",STATE[whereamI][0])
+        displayselect(count)
+
     
-def uppressed():
+def uppressed(count=1):
     time.sleep(0.1)
+    if(time.ticks_ms()-whenPressed>500):
+        displayselect(count)
+
+
+def displayselect(count):
     global whereamI
     global STATE
     global whenPressed
     global changed
     global prev
 
-    if(time.ticks_ms()-whenPressed>500):
-        print("prev state",STATE[whereamI][0])
-        STATE[whereamI][0]=(STATE[whereamI][0]+1)%STATE[whereamI][1]
-        whenPressed=time.ticks_ms()
-        display.selector(whereamI,STATE[whereamI][0],prev) #draw circle at selection position, and remove from the previous position
-        prev=STATE[whereamI][0]
-        changed=True
-        print("current state",STATE[whereamI][0])
-   
+    STATE[whereamI][0]=(STATE[whereamI][0]+count)%STATE[whereamI][1]
+    display.selector(whereamI,STATE[whereamI][0],prev) #draw circle at selection position, and remove from the previous position
+    prev=STATE[whereamI][0]
+    changed=True
+    whenPressed=time.ticks_ms()
+    
 def selectpressed():
     global points
     time.sleep(0.3)
@@ -116,6 +160,9 @@ def selectpressed():
     global nxt
     global load
     global clearscreen
+    global leader
+    global follower
+    
     #iconFrames=[[fb_Train,fb_Play,fb_Setting],[fb_add,fb_delete,fb_smallplay,fb_home],[fb_save,fb_pause,fb_home,fb_toggle],[fb_next,fb_home,fb_toggle]]
     #Home screen
     if(whereamI==0):
@@ -124,19 +171,20 @@ def selectpressed():
         elif(STATE[0][0]==1):
             whereamI=3      #select the play Screen   - with choices of dataset
         elif(STATE[0][0]==2):
-            display.showmessage("Coming soon")
-            #whereamI=4     #Settings Screen - ble connection, wifi, etc. 
+            #display.showmessage("Coming soon")
+            print("going to setting")
+            whereamI=4     #Settings Screen - ble connection, wifi, etc. 
         display.fill(0)
         display.selector(whereamI,STATE[whereamI][0],-1)
         #display.displayscreen(whereamI)
         
     #Train screen
     elif(whereamI==1): 
-        if(STATE[1][0]==0): #add data point    
+        if(STATE[whereamI][0]==0): #add data point    
             adddata=True         
-        elif(STATE[1][0]==1):#delete data point
+        elif(STATE[whereamI][0]==1):#delete data point
             deletedata=True 
-        elif(STATE[1][0]==2): #run using the train data
+        elif(STATE[whereamI][0]==2): #run using the train data
             if (points):
                 whereamI=2
             else:
@@ -151,14 +199,14 @@ def selectpressed():
         
     #Play screen 
     elif(whereamI==2): 
-        if(STATE[2][0]==0): # save data
+        if(STATE[whereamI][0]==0): # save data
             save=True    
-        elif(STATE[2][0]==1):  # pause the run 
+        elif(STATE[whereamI][0]==1):  # pause the run 
             pause=True  
-        elif(STATE[2][0]==2): #go home
+        elif(STATE[whereamI][0]==2): #go home
             resettohome()
             clearscreen=True
-        elif(STATE[2][0]==3):# toggle screeen view
+        elif(STATE[whereamI][0]==3):# toggle screeen view
             toggle=True
         
 
@@ -167,20 +215,34 @@ def selectpressed():
         
     #Play the files screen 
     elif(whereamI==3): 
-        if(STATE[3][0]==0): # show next data 
+        if(STATE[whereamI][0]==0): # show next data 
             nxt=True
-        elif(STATE[3][0]==1): #delete dataset
+        elif(STATE[whereamI][0]==1): #delete dataset
             deletedata=True
-            print("button pressed")
-        elif(STATE[3][0]==2): #go home
+
+        elif(STATE[whereamI][0]==2): #go home
             resettohome()
             clearscreen=True
-        elif(STATE[3][0]==3): #toggle
+        elif(STATE[whereamI][0]==3): #toggle
             toggle=True     
         
         display.fill(0) # clear screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
 
+
+    #Settings screen
+    elif(whereamI==4):
+        print("I was checked")
+        if(STATE[whereamI][0]==0): # look for followers
+            leader=True
+        elif(STATE[whereamI][0]==1): # look for leaders
+            follower=True
+        elif(STATE[whereamI][0]==1): # Go home
+            resettohome()
+            clearscreen=True
+        
+        display.fill(0) # clear screen
+        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
         
 #call back to check the button presses
         
@@ -211,10 +273,7 @@ def check_switch(p):
     switch_state_up = switch_up.value()
     switch_state_down = switch_down.value()
     switch_state_select = switch_select.value()
-    
-    
-
-        
+         
     if switch_state_up != last_switch_state_up:
         switched_up = True
         
@@ -243,25 +302,6 @@ def check_switch(p):
     last_switch_state_select = switch_state_select
 
 
-switch_down = Pin(8, Pin.IN)
-switch_select = Pin(9, Pin.IN)
-switch_up= Pin(10, Pin.IN)
-
-switch_state_up = switch_up.value()
-switch_state_down = switch_down.value()
-switch_state_select = switch_select.value()
-
-last_switch_state_up = switch_state_up
-last_switch_state_down = switch_state_down
-last_switch_state_select = switch_state_select
-
-switched_up = False
-switched_down = False
-switched_select = False
-
-
-
-
 
 def displaybatt(p):
     batterycharge=battery.read()
@@ -272,38 +312,6 @@ def displaybatt(p):
 
 
         
-
-  
-#setting interrupts for button presses
-'''  
-bdown.irq(trigger=Pin.IRQ_RISING, handler=decrease)
-bup.irq(trigger=Pin.IRQ_RISING, handler=increase)
-bselect.irq(trigger=Pin.IRQ_RISING, handler=selector)
-'''
-# pot pin GPIO3, A1, D1
-
-pot = ADC(Pin(3))
-pot.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-# pot.read() returns integers in [0, 4095]
-
-
-# light pin GPIO5
-light = ADC(Pin(5))
-light.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-
-
-battery = ADC(Pin(4))
-battery.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-
-# plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
-
-display.welcomemessage()
-
-
-tim = Timer(0)
-tim.init(period=50, mode=Timer.PERIODIC, callback=check_switch)
-batt = Timer(2)
-batt.init(period=500, mode=Timer.PERIODIC, callback=displaybatt)
 
 
 
@@ -411,28 +419,50 @@ def nearestNeighbor(data, point):
     return test
 
 
+display.welcomemessage()
 
 
+#bluetooth functions
+    
+import bleFunctions
+import bluetooth
+
+ble = bluetooth.BLE()
 
 
-point = [9,9]
-points = []
+uart = bleFunctions.BLEUART(ble,ID)
 
-#setup with homescreen
-#starts with whereamI=0
+def on_rx():
+    print("rx: ", uart.read().decode().strip())
+            
+def broadcast(point, LEVEL0 , LEVEL1, displayMessage = "" ):
+    uart.write(str(point)+str(LEVEL0)+str(LEVEL1)+displayMessage)
+    
+def closeconn():
+    uart.close()
 
+def waitforconnection():
+    print("waiting")
+    
+    
+#setting up Timers
+tim = Timer(0)
+tim.init(period=50, mode=Timer.PERIODIC, callback=check_switch)
+batt = Timer(2)
+batt.init(period=500, mode=Timer.PERIODIC, callback=displaybatt)
+
+#setting up BLE irq
+uart.irq(handler=on_rx)
+
+#setup with homescreen  #starts with whereamI=0
 display.selector(whereamI,STATE[whereamI][0],-1)
 oldpoint=[-1,-1]
-#display.displayscreen(whereamI)
 oldbattery=1
 
 while True:
-    #display_battery() #display batter value
-
     point = readSensor()
+    broadcast(point, whereamI, STATE[whereamI][0],"milan")
 
-
-        
     if(whereamI==1): # Training Screen
         if(adddata):
             points.append(list(point))
@@ -466,6 +496,7 @@ while True:
         elif(save):
             # save function here
             savetofile(points)
+            uppressed(count=2)
                 
         elif(pause):
             #pause the data
@@ -516,6 +547,22 @@ while True:
             deletedata=False
             nxt=False
             toggle=False
+            
+        
+    elif(whereamI==4): # Settings Screen
+        if(leader):
+            display.showmessage(ID)
+            waitforconnection()
+            
+        elif(follower):
+            print("I shall follow you")
+            
+        oldpoint=point
+        #reset all flags
+        
+        leader=False
+        follower=False
+
 
     oldpoint=point
     #time.sleep(1)
@@ -525,6 +572,5 @@ while True:
         display.fill(0)
         display.selector(whereamI,STATE[whereamI][0],-1)
         clearscreen=False
-        print("I was called")
-    
+
 
