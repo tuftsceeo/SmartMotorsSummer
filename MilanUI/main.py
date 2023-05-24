@@ -11,6 +11,10 @@ import os
 import sys
 import ubinascii
 import machine
+    
+import bleFunctions
+import bluetooth
+
 
 #unique name 
 ID= ubinascii.hexlify(machine.unique_id()).decode()
@@ -173,7 +177,8 @@ def selectpressed():
         elif(STATE[0][0]==2):
             #display.showmessage("Coming soon")
             print("going to setting")
-            whereamI=4     #Settings Screen - ble connection, wifi, etc. 
+            whereamI=4     #Settings Screen - ble connection, wifi, etc.
+            prev=0
         display.fill(0)
         display.selector(whereamI,STATE[whereamI][0],-1)
         #display.displayscreen(whereamI)
@@ -243,6 +248,7 @@ def selectpressed():
         
         display.fill(0) # clear screen
         display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
+
         
 #call back to check the button presses
         
@@ -305,15 +311,9 @@ def check_switch(p):
 
 def displaybatt(p):
     batterycharge=battery.read()
-    print(batterycharge)
-    #display.showmessage(str(batterycharge))
     display.showbattery(batterycharge)
+    return batterycharge
     
-
-
-        
-
-
 
 
 def mappot(value):
@@ -419,30 +419,30 @@ def nearestNeighbor(data, point):
     return test
 
 
-display.welcomemessage()
 
 
-#bluetooth functions
-    
-import bleFunctions
-import bluetooth
 
-ble = bluetooth.BLE()
+def on_scan(addr_type, addr, name):
+    if addr_type is not None:
+        print("Found sensor:", addr_type, addr, name)
+        #central.connect()
 
-
-uart = bleFunctions.BLEUART(ble,ID)
+    else:
+        print("I don't know what this is")
 
 def on_rx():
     print("rx: ", uart.read().decode().strip())
             
 def broadcast(point, LEVEL0 , LEVEL1, displayMessage = "" ):
-    uart.write(str(point)+str(LEVEL0)+str(LEVEL1)+displayMessage)
+    uart.write(str(point)+str(LEVEL0)+str(LEVEL1)+ str(displaybatt(1))+ displayMessage)
     
 def closeconn():
     uart.close()
 
 def waitforconnection():
     print("waiting")
+    
+    
     
     
 #setting up Timers
@@ -452,6 +452,15 @@ batt = Timer(2)
 batt.init(period=500, mode=Timer.PERIODIC, callback=displaybatt)
 
 #setting up BLE irq
+
+
+display.welcomemessage()
+
+#bluetooth functions
+
+ble = bluetooth.BLE()
+uart = bleFunctions.BLEUART(ble)
+#uart.scan(callback=on_scan)
 uart.irq(handler=on_rx)
 
 #setup with homescreen  #starts with whereamI=0
@@ -461,7 +470,7 @@ oldbattery=1
 
 while True:
     point = readSensor()
-    broadcast(point, whereamI, STATE[whereamI][0],"milan")
+    broadcast(point, whereamI, STATE[whereamI][0],ID)
 
     if(whereamI==1): # Training Screen
         if(adddata):
@@ -555,6 +564,7 @@ while True:
             waitforconnection()
             
         elif(follower):
+            
             print("I shall follow you")
             
         oldpoint=point
