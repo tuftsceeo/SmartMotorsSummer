@@ -14,6 +14,9 @@ import bleFunctions
 import bluetooth
 
 
+import sensors
+sens=sensors.SENSORS()
+
 #unique name 
 ID= ubinascii.hexlify(machine.unique_id()).decode()
 
@@ -98,25 +101,6 @@ s = servo.Servo(Pin(2))
 switch_down = Pin(8, Pin.IN)
 switch_select = Pin(9, Pin.IN)
 switch_up= Pin(10, Pin.IN)
-
-
-# pot pin GPIO3, A1, D1
-pot = ADC(Pin(3))
-pot.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-# pot.read() returns integers in [0, 4095]
-
-
-# light pin GPIO5
-light = ADC(Pin(5))
-light.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-
-
-battery = ADC(Pin(4))
-battery.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-
-# plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
-
-
 
 
 #interrupt functions
@@ -308,7 +292,7 @@ def check_switch(p):
 
 
 def displaybatt(p):
-    batterycharge=battery.read()
+    batterycharge=sens.readbattery()
     display.showbattery(batterycharge)
     return batterycharge
     
@@ -326,21 +310,6 @@ def fakebattery(value):
     return int((final[1]-final[0]) / (initial[1]-initial[0]) * (value - initial[0]) + final[0])
 
 
-def readSensor():
-    l=[]
-    p=[]  
-    for i in range(1000):
-        l.append(light.read())
-        p.append(pot.read())
-    l.sort()
-    p.sort()
-    l=l[300:600]
-    p=p[300:600]
-    avlight=sum(l)/len(l)
-    avpos=sum(p)/len(p)
-    
-    point = avlight, mappot(avpos)
-    return point
 
 def savetofile(pointstosave):
     import os
@@ -399,8 +368,6 @@ def readfile():
 
 
 def nearestNeighbor(data, point):
-    #print("data",data)
-    #print("point",point)
     try:
         point = point[0]
     except TypeError:
@@ -467,7 +434,7 @@ oldpoint=[-1,-1]
 oldbattery=1
 
 while True:
-    point = readSensor()
+    point = sens.readpoint()
     broadcast(point, whereamI, STATE[whereamI][0],ID)
 
     if(whereamI==1): # Training Screen
@@ -580,5 +547,6 @@ while True:
         display.fill(0)
         display.selector(whereamI,STATE[whereamI][0],-1)
         clearscreen=False
+
 
 
