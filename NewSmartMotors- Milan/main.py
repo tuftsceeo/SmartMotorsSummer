@@ -1,5 +1,6 @@
 
 from machine import Pin, SoftI2C, PWM, ADC
+from files import *
 import time
 from machine import Timer
 #import smarttools
@@ -17,64 +18,32 @@ import bluetooth
 import sensors
 sens=sensors.SENSORS()
 
-#unique name 
+#unique name
 ID= ubinascii.hexlify(machine.unique_id()).decode()
 
+highlightedIcon=[[0,3],[0,4],[0,4],[0,4],[0,3]] #[homescreen, trainscreen, playscreen, playthefilesscreen, settingsscreen]
 
-STATE=[[0,3],[0,4],[0,4],[0,4],[0,3]] #[homescreen, trainscreen, playscreen, playthefilesscreen, settingsscreen]
-whereamI=0
-wherewasI=-1
-whenPressed=0
-prev=0
+screenID=0
+lastPressed=0
+previousIcon=0
 filenumber=0
 
-point = [9,9]
 points = []
 
 
-#STATE=[(ICONnumber,TotalIcons),...]
-# First number is ICON - default is 0 or first icon
-# Second is Total number of ICONS in the SCREEN - 3 icons on Homescreen, 2 icons on PlayScreen and so on
-#whereamI gives the SCREEN number I am at
-#STATE[whereamI] gives the selected icon and total number of icons on that screen
 
-#ICON
-#0 - FirstICON
-#1 - SecondICON
-#2- ThirdICON
 
-#SCREEN
-#0 - HOMESCREEN
-#1 - PlaySCREEN
-#2 - TrainSCREEN
-#3 - Playthefiles
-#4 - ConnectSCREEN
+
 
 
 #Defining all flags
-#Train screen flags
-adddata=False
-deletedata=False
-run=False
-
-#Play screen flags
-toggle=False
-pause=False
-
-#Play files screen flags
-prev=False
-nxt=False
-load=False
-
-#Settings screen flags
-leader=False
-follower=False
-
+#flags
+flags=[False,False,False,False]
 
 #switch flags
-switch_state_up = False 
-switch_state_down = False 
-switch_state_select = False 
+switch_state_up = False
+switch_state_down = False
+switch_state_select = False
 
 last_switch_state_up = False
 last_switch_state_down = False
@@ -102,148 +71,63 @@ switch_down = Pin(8, Pin.IN)
 switch_select = Pin(9, Pin.IN)
 switch_up= Pin(10, Pin.IN)
 
+#highlightedIcon=[(ICON,TotalIcons),...]
+#screenID gives the SCREEN number I am at
+#SCREENID
+#0 - HOMESCREEN
+#1 - PlaySCREEN
+#2 - TrainSCREEN
+#3 - Playthefiles
+#4 - ConnectSCREEN
+
+#highligtedIcons[screenID][0] which icon is highlighted on screenID screen
+#highligtedIcons[screenID][0] =1 # First Icon selected
+#highligtedIcons[screenID][0] =2 #Second
+#highligtedIcons[screenID][0] =3 #Third
 
 #interrupt functions
 def downpressed(count=-1):
     time.sleep(0.1)
-    if(time.ticks_ms()-whenPressed>500):
+    if(time.ticks_ms()-lastPressed>500):
         displayselect(count)
 
     
 def uppressed(count=1):
     time.sleep(0.1)
-    if(time.ticks_ms()-whenPressed>500):
+    if(time.ticks_ms()-lastPressed>500):
         displayselect(count)
 
 
-def displayselect(count):
-    global whereamI
-    global STATE
-    global whenPressed
-    global changed
-    global prev
+def displayselect(selectedIcon):
+    global screenID
+    global highlightedIcon
+    global lastPressed
+    global previousIcon
 
-    STATE[whereamI][0]=(STATE[whereamI][0]+count)%STATE[whereamI][1]
-    display.selector(whereamI,STATE[whereamI][0],prev) #draw circle at selection position, and remove from the previous position
-    prev=STATE[whereamI][0]
-    changed=True
-    whenPressed=time.ticks_ms()
+    highlightedIcon[screenID][0]=(highlightedIcon[screenID][0]+selectedIcon)%highlightedIcon[screenID][1]
+    display.selector(screenID,highlightedIcon[screenID][0],previousIcon) #draw circle at selection position, and remove from the previousIconious position
+    previousIcon=highlightedIcon[screenID][0]
+
+    lastPressed=time.ticks_ms()
     
 def selectpressed():
-    global points
-    time.sleep(0.3)
     #declare all global variables, include all flags
-    global whereamI
-    global state
-    global whenPressed
-    global adddata
-    global deletedata
-    global save
-    global run
-    global toggle
-    global pause
-    global prev
-    global nxt
-    global load
-    global clearscreen
-    global leader
-    global follower
-    
-    #iconFrames=[[fb_Train,fb_Play,fb_Setting],[fb_add,fb_delete,fb_smallplay,fb_home],[fb_save,fb_pause,fb_home,fb_toggle],[fb_next,fb_home,fb_toggle]]
-    #Home screen
-    if(whereamI==0):
-        if(STATE[0][0]==0):
-            whereamI=1      #Train Screen
-        elif(STATE[0][0]==1):
-            whereamI=3      #select the play Screen   - with choices of dataset
-        elif(STATE[0][0]==2):
-            #display.showmessage("Coming soon")
-            print("going to setting")
-            whereamI=4     #Settings Screen - ble connection, wifi, etc.
-            prev=0
-        display.fill(0)
-        display.selector(whereamI,STATE[whereamI][0],-1)
-        #display.displayscreen(whereamI)
-        
-    #Train screen
-    elif(whereamI==1): 
-        if(STATE[whereamI][0]==0): #add data point    
-            adddata=True         
-        elif(STATE[whereamI][0]==1):#delete data point
-            deletedata=True 
-        elif(STATE[whereamI][0]==2): #run using the train data
-            if (points):
-                whereamI=2
-            else:
-                display.showmessage("No data to run")
-                clearscreen=True
-        elif(STATE[1][0]==3): # go back to homescreen
-            resettohome()
-            clearscreen=True
-
-        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-
-        
-    #Play screen 
-    elif(whereamI==2): 
-        if(STATE[whereamI][0]==0): # save data
-            save=True    
-        elif(STATE[whereamI][0]==1):  # pause the run 
-            pause=True  
-        elif(STATE[whereamI][0]==2): #go home
-            resettohome()
-            clearscreen=True
-        elif(STATE[whereamI][0]==3):# toggle screeen view
-            toggle=True
-        
-
-        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-
-        
-    #Play the files screen 
-    elif(whereamI==3): 
-        if(STATE[whereamI][0]==0): # show next data 
-            nxt=True
-        elif(STATE[whereamI][0]==1): #delete dataset
-            deletedata=True
-
-        elif(STATE[whereamI][0]==2): #go home
-            resettohome()
-            clearscreen=True
-        elif(STATE[whereamI][0]==3): #toggle
-            toggle=True     
-        
-        display.fill(0) # clear screen
-        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
+    global flags
+    time.sleep(0.3)
+    flags[highlightedIcon[screenID][0]]=True
 
 
-    #Settings screen
-    elif(whereamI==4):
-        print("I was checked")
-        if(STATE[whereamI][0]==0): # look for followers
-            leader=True
-        elif(STATE[whereamI][0]==1): # look for leaders
-            follower=True
-        elif(STATE[whereamI][0]==1): # Go home
-            resettohome()
-            clearscreen=True
-        
-        display.fill(0) # clear screen
-        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-
-        
-#call back to check the button presses
         
 def resettohome():
-    global whereamI
-    global STATE
-    global points
-    global prev
-    whereamI=0      
-    STATE=[[0,3],[0,4],[0,4],[0,4],[0,4]]
+    global screenID
+    global highlightedIcon
+    global previousIcon
+    global clearscreen
+    screenID=0
+    highlightedIcon=[[0,3],[0,4],[0,4],[0,4],[0,4]]
     #display.fill(0) # clear screen
-    points=[]
-    prev=0
+    previousIcon=0
+    clearscreen=True
     
 def check_switch(p):
     global switch_state_up
@@ -311,59 +195,6 @@ def fakebattery(value):
 
 
 
-def savetofile(pointstosave):
-    import os
-    if(os.listdir().count('data.py')):
-        import data
-        datapoints=[]
-        del sys.modules["data"]
-        import data
-        try:
-            datapoints=data.points
-            datapoints.append(pointstosave)
-        except:
-            datapoints.append(pointstosave)
-        del sys.modules["data"]
-        #getting ready to reimporting data file
-    else:
-        datapoints=[]
-        datapoints.append(pointstosave)
-        print("new file")
-    #writing files to the data.py
-    
-    f=open("data.py","w")
-    f.write("points="+str(datapoints)+"\r\n")
-    f.close()
-
-def replacefile(pointstosave):
-    import os
-    if(os.listdir().count('data.py')):
-        f=open("data.py","w")
-        f.write("points="+str(pointstosave)+"\r\n")
-        f.close()
-    else:
-        return 0
-
-    
-def readfile():
-    global clearscreen
-    import os
-    if(os.listdir().count('data.py')):
-        import data
-        if(data.points):
-            return(data.points)
-        else:
-            display.showmessage("No data saved")
-            resettohome()
-            clearscreen=True
-            return([])
-    else:
-        display.showmessage("No data saved")
-        resettohome()
-        clearscreen=True
-        return([])
-    
-        #also make this go home
 
 
 
@@ -406,7 +237,11 @@ def closeconn():
 
 def waitforconnection():
     print("waiting")
-    
+
+def resetflags():
+    global flags
+    for i in range(len(flags)):
+        flags[i]=False
     
     
     
@@ -428,125 +263,131 @@ uart = bleFunctions.BLEUART(ble)
 #uart.scan(callback=on_scan)
 uart.irq(handler=on_rx)
 
-#setup with homescreen  #starts with whereamI=0
-display.selector(whereamI,STATE[whereamI][0],-1)
+#setup with homescreen  #starts with screenID=0
+display.selector(screenID,highlightedIcon[screenID][0],-1)
 oldpoint=[-1,-1]
 oldbattery=1
 
 while True:
     point = sens.readpoint()
-    broadcast(point, whereamI, STATE[whereamI][0],ID)
-
-    if(whereamI==1): # Training Screen
-        if(adddata):
+    broadcast(point, screenID, highlightedIcon[screenID][0],ID)
+    
+    #Homepage
+    #[fb_Train,fb_Play,fb_Setting]
+    if(screenID==0):
+        if(flags[0]):
+            points=[] #empty the points arrray
+            screenID=1
+            clearscreen=True
+            
+        elif(flags[1]):
+            screenID=3
+            clearscreen=True
+            
+        elif(flags[2]):
+            screenID=4
+    
+    # Training Screen
+    # [fb_add,fb_delete,fb_smallplay,fb_home]
+    elif(screenID==1):
+        if(flags[0]):
             points.append(list(point))
             display.graph(oldpoint, point, points)
             
-        elif(deletedata):
+        elif(flags[1]):
             if(points): #delete only when there is something
                 points.pop()
             display.cleargraph()
             display.graph(oldpoint, point, points)
                 
-        elif(run):
-            whereamI=2 # trigger play screen
-            nearestNeighbor(points,point)
-            
+        elif(flags[2]):
+            if (points):
+                screenID=2 # trigger play screen
+                uppressed(count=4)
+            else:
+                display.showmessage("No data to run")
+ 
+        elif(flags[3]): #Home
+           resettohome()
+        
         if(not point==oldpoint): #only when point is different now
             s.write_angle(point[1])
             display.graph(oldpoint, point, points)
 
-        #reset all flags
-        adddata=False
-        deletedata=False
-        save=False
-        oldpoint=point
-
-    elif(whereamI==2): # Play Screen        
-        if(toggle):
-            # put toggle function here - create a dashboard view
-            pass
-            
-        elif(save):
-            # save function here
+    #Play Screen
+    #[fb_save,fb_pause,fb_home,fb_toggle]
+    elif(screenID==2):
+        if(flags[0]):  # save function here
             savetofile(points)
             uppressed(count=2)
+           
+        elif(flags[1]): #pause
+            pass
                 
-        elif(pause):
-            #pause the data
+        elif(flags[2]): # go home
+            resettohome()
+        
+        elif(flags[3]):  #toggle the data
             pass
             
-            
         if(not point==oldpoint): #only when point is different now
-            
             point = nearestNeighbor(points,point)
+            print(point)
             s.write_angle(point[1])
             display.graph(oldpoint, point, points)
-    
-        oldpoint=point
-        #reset all flags
-        toggle=False
-        save=False
-        pause=False
 
     
-    elif(whereamI==3): # Load saved files screen
+    # Load saved files screen
+    #[fb_next,fb_delete,fb_home,fb_toggle]
+    elif(screenID==3):
         datapoints=readfile()
+        
         if(datapoints):
             numberofdata=len(datapoints)
             points=datapoints[filenumber]
-            if(nxt):
+            
+            if(flags[0]):
                 filenumber=((filenumber+1)%numberofdata)
                 points=datapoints[filenumber]
                 display.cleargraph()
-            elif(deletedata):
+                
+            elif(flags[1]):
                 del datapoints[filenumber]
                 replacefile(datapoints)
                 filenumber=0
                 display.cleargraph()
-                
 
-            elif(toggle):
-                #toggle the screen
-                pass
-       
+            elif(flags[2]):
+                resettohome()
+                
             if(not point==oldpoint): #only when point is different now
                 point = nearestNeighbor(points,point)
                 s.write_angle(point[1])
                 display.graph(oldpoint, point, points)
-                
-            oldpoint=point
-            #reset all flags
-            
-            deletedata=False
-            nxt=False
-            toggle=False
-            
-        
-    elif(whereamI==4): # Settings Screen
-        if(leader):
+        else:
+            resettohome()
+               
+    # Settings Screen
+    #[fb_Lead,fb_Follow, fb_BIGHome]
+    elif(screenID==4):
+        if(flags[0]):
             display.showmessage(ID)
             waitforconnection()
             
-        elif(follower):
-            
+        elif(flags[1]):
             print("I shall follow you")
-            
-        oldpoint=point
-        #reset all flags
         
-        leader=False
-        follower=False
-
-
+        elif(flags[2]):
+            resettohome()
+                    
     oldpoint=point
-    #time.sleep(1)
-    #oldbattery=newbattery
+    resetflags()
     if clearscreen:
-        #display.clearscreen()
         display.fill(0)
-        display.selector(whereamI,STATE[whereamI][0],-1)
+        display.selector(screenID,highlightedIcon[screenID][0],-1)
         clearscreen=False
+
+
 
 
 

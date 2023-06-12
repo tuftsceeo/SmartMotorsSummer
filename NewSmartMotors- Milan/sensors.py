@@ -38,7 +38,7 @@ class SENSORS:
         return self.pot.read()
     
     def accel(self):
-        self.x =self.adx.xValue 
+        self.x =self.adx.xValue
         self.y =self.adx.yValue
         self.z =self.adx.zValue
         
@@ -55,7 +55,7 @@ class SENSORS:
         
     def readpoint(self):
         l=[]
-        p=[]  
+        p=[]
         for i in range(1000):
             l.append(self.readlight())
             p.append(self.readpot())

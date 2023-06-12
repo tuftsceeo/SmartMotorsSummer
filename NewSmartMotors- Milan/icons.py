@@ -8,9 +8,10 @@ import time
 
 MAX_BATTERY=2900
 MIN_BATTERY=2600
-#define icons here
 
-def createIcons(iconSize, iconFrames, offsetx=0, offsety=0, direction=0): 
+
+#define icons here
+def createIcons(iconSize, iconFrames, offsetx=0, offsety=0, direction=0):
     icons=[]
     padding=2
     spacingV=int((screenHeight - iconSize*len(iconFrames))/ (len(iconFrames))-padding)
@@ -49,9 +50,6 @@ fb_back = framebuf.FrameBuffer(bytearray(b'\xff\xff\xff\x80\x80\x00\x00\x80\x80\
 
 fb_upnobox = framebuf.FrameBuffer(bytearray(b'\x04\x00\x0e\x00\x1f\x00?\x80\x7f\xc0\xff\xe0\x1f\x00\x1f\x00'), 11, 8, framebuf.MONO_HLSB)
 fb_downnobox = framebuf.FrameBuffer(bytearray(b'\x1f\x00\x1f\x00\xff\xe0\x7f\xc0?\x80\x1f\x00\x0e\x00\x04\x00'), 11, 8, framebuf.MONO_HLSB)
-
-fb_DOWN = framebuf.FrameBuffer(bytearray(b'\xff\xff\xff\x80\x80\x00\x00\x80\x80>\x00\x80\x80>\x00\x80\x80>\x00\x80\x80>\x00\x80\x80>\x00\x80\x81\xff\xc0\x80\x80\xff\x80\x80\x80\x7f\x00\x80\x80>\x00\x80\x80\x1c\x00\x80\x80\x08\x00\x80\x80\x00\x00\x80\xff\xff\xff\x80'), 25, 15, framebuf.MONO_HLSB)
-fb_UP = framebuf.FrameBuffer(bytearray(b'\xff\xff\xff\x80\x80\x00\x00\x80\x80\x08\x00\x80\x80\x1c\x00\x80\x80>\x00\x80\x80\x7f\x00\x80\x80\xff\x80\x80\x81\xff\xc0\x80\x80>\x00\x80\x80>\x00\x80\x80>\x00\x80\x80>\x00\x80\x80>\x00\x80\x80\x00\x00\x80\xff\xff\xff\x80'), 25, 15, framebuf.MONO_HLSB)
 #PlayScreen Icons
 
 fb_home = framebuf.FrameBuffer(bytearray(b'\xff\xff\xff\x80\x80\x00\x00\x80\x80\x00\x00\x80\x80>\x00\x80\x80\x7f\x00\x80\x80\xff\x80\x80\x81\xff\xc0\x80\x83\xff\xe0\x80\x87\xff\xf0\x80\x8f\xff\xf8\x80\x9f\xff\xfc\x80\xbf\xff\xfe\x80\x87\xff\xf0\x80\x87\xff\xf0\x80\x87\xc1\xf0\x80\x87\xc1\xf0\x80\x87\xc1\xf0\x80\x87\xc1\xf0\x80\x87\xc1\xf0\x80\x87\xc1\xf0\x80\x87\xc1\xf0\x80\x80\x00\x00\x80\x80\x00\x00\x80\x80\x00\x00\x80\xff\xff\xff\x80'), 25, 25, framebuf.MONO_HLSB)
@@ -80,9 +78,6 @@ for index,icon in enumerate(iconFrames):
     icons = createIcons(iconSize[index], icon, offsetx=offsets[index][0], offsety=offsets[index][1] , direction=direction[index])
     Icons.append(icons)
 
-print("Icons",Icons)
-
-
 class SSD1306_SMART(ssd1306.SSD1306_I2C):
     def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False, scale = 8, mode = 0, plotsize = [[3,3],[100,60]]):
         self.scale = scale
@@ -94,7 +89,7 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         super().__init__(width, height, i2c, addr = 0x3C, external_vcc = external_vcc)
 
   
-    def displayscreen(self,whereamI):    
+    def displayscreen(self,whereamI):
         for IconX,IconY,frame in Icons[whereamI]:
             self.blit(frame, IconX, IconY, 0)
         self.show()
@@ -122,7 +117,7 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         length=20
         width=6
         gap=2
-        self.rect(startx-int(gap/2),starty-int(gap/2),length,width+gap,1)       
+        self.rect(startx-int(gap/2),starty-int(gap/2),length,width+gap,1)
         batterylength=int((length)*(batterylevel-MIN_BATTERY)/(MAX_BATTERY-MIN_BATTERY))+1
         self.fill_rect(startx,starty,length-batterylength,width,0)
         self.fill_rect(startx-2*gap, starty+int(width/2)-gap,2*gap,2*gap,1)
@@ -178,19 +173,20 @@ class SSD1306_SMART(ssd1306.SSD1306_I2C):
         for a in range(32):
             i=2*a
             self.fill_rect(64-(2*i),32-i,4*i,2*i,0)
-            self.blit(fb_SMLOGO,39,7,0) 
+            self.blit(fb_SMLOGO,39,7,0)
             self.show()
         '''
         for i in range(80):
             self.fill(0)
-            self.blit(fb_SMLOGO,38-i,7,0)            
+            self.blit(fb_SMLOGO,38-i,7,0)
             self.blit(fb_SMLOGO,40+i,7,0)
             self.show()
-        '''      
+        '''
         self.clear()
         self.show()
         
     def clear(self):
         self.fill(0)
         self.show()
+
 
