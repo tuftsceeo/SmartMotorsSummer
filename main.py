@@ -223,7 +223,11 @@ while True:
         print(e)
         break
 gc.collect()
-display.text("Error encountered", 20,20,1)
+
+display.fill(0) # Clear Screen before Error
+display.show()
+
+display.text("Error - Restart", 20,20,1)
 display.show()
 s.close()
 
