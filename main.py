@@ -24,42 +24,12 @@ from web import web_page
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 display = smarttools.SSD1306_SMART(128, 64, i2c)
 
-# connect to wifi 
-wlan=network.WLAN(network.AP_IF)
-wlan.active(False)
-wlan.active(True)
 
-mac = ubinascii.hexlify(network.WLAN().config("mac")).decode()
-lastmac=bytearray(mac[-6:])
-lastmac[5]=lastmac[5]+1
-
-#SSID= 'ESP_'+lastmac.decode().upper()
-SSID = wlan.config('essid')
-
-display.text(SSID, 20,20,1)
-display.show()
-print("Waiting for connection...")
-while (not wlan.isconnected()):
-    time.sleep(1)
-    
-print("Wifi has been connected...")
-print("Connect to ip address 192.168.4.1")
-display.text(SSID, 20,20,1)
-display.text("Now connect to", 10,30,1)
-display.text("192.168.4.1", 20,50,1)
-display.show()
-
-s = socket.socket()
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind(('', 80))
-s.listen(5)
-
-# CODE below is for Web Server
 # connect servo
 motor = servo.Servo(Pin(2))
 motor.write_angle(90)
 
-# light pin GPIO5
+# sensor pin GPIO5
 Sensor = ADC(Pin(5))
 Sensor.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
 
@@ -69,7 +39,62 @@ training_data = []
 training_data_from_file = []
 datafilename = "trainData.txt"
 
-STATE = 1
+
+# get mac address
+mac = ubinascii.hexlify(network.WLAN().config("mac")).decode()
+lastmac=bytearray(mac[-6:])
+lastmac[5]=lastmac[5]+1
+#SSID= 'ESP_'+lastmac.decode().upper()
+
+
+# Enable Access Point 
+wlan=network.WLAN(network.AP_IF)
+wlan.active(False)
+wlan.active(True)
+
+
+# get SSID
+SSID = wlan.config('essid')
+
+
+# Wait for Connection and Update Display
+display.text(SSID, 20,20,1)
+display.show()
+print("Waiting for connection...")
+while (not wlan.isconnected()):
+    time.sleep(1)
+
+# Initialize Socket
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(('', 80))
+s.listen(5)
+
+# Wait 3 Seconds
+display.fill(0)
+display.text("Connecting .", 5,30,1)
+display.show()
+time.sleep(1)
+display.text("Connecting ..", 5,30,1)
+display.show()
+time.sleep(1)
+display.text("Connecting ...", 5,30,1)
+display.show()
+time.sleep(1)
+
+display.fill(0)
+display.show()
+    
+print("Wifi has been connected...")
+display.text(SSID, 20,20,1)
+print("Connect to IP address 192.168.4.1")
+display.text("Now connect to", 10,40,1)
+display.text("192.168.4.1", 20,50,1)
+display.show()
+
+
+
+STATE = 1 #STATE 1 = training, STATE 0 = testing/playing
 
 # during test, saves the motor value associated with the sensor 
 global_TEST_motor = 0
@@ -159,19 +184,29 @@ while True:
     try:
         conn, addr = s.accept()
         reply = web_page()
+        
+        #heartbeat
+        if addr[1]%10<5:
+            display.rect(0,0,2,2,1)
+            display.show()
+        else:
+            display.rect(0,0,2,2,0)
+            display.show()
         print('Got a connection from %s' % str(addr))
         request = conn.recv(1024)
         request = str(request)
             
-        print('Content = %s' % request)
+        #print('Content = %s' % request)
         
         if(STATE == 0):
             runData()
             
         # setting the sensor reading     
         if request.find('/getDHT') == 6:
+            
             t = read_sensor()
             x = int((100 * int(t))/4095)
+            print("Read Sensor:", x)
     
             # if on testing, then send the nearest motor value 
             if (STATE == 0):
@@ -183,13 +218,16 @@ while True:
             reply = str(x) + "|" + motor_rotation 
         
         if request.find('/slider') == 6:
+            
             splitval = request.split("=", 1)
             number = splitval[1].split(" ", 1)
             value = number[0]
+            print("Move Motor: ", value)
             motor.write_angle(180-int(value))
             
                 
         if request.find('/?addvalue') == 6:
+            print("Add Value")
             # request comes in form /?addvalue="+sliderValue+"="+sensorValue
             split_values = request.split("=", 1)
             motor_light = split_values[1].split(" ", 1)[0]
@@ -201,6 +239,7 @@ while True:
                 
         # removes the last data from the list    
         if request.find('/?deletevalue') == 6:
+            print("Delete Value")
             removeData()
         
         if request.find('/?test') == 6:
@@ -218,8 +257,10 @@ while True:
         conn.send('Content-Type: text/html\n')
         conn.send('Connection: close\n\n')
         conn.sendall(reply)
-        conn.close()
+        conn.close()       
+        
     except Exception as e:
+        print("Main Loop Exception - ERROR")
         print(e)
         break
 gc.collect()
