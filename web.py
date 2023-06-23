@@ -1,5 +1,9 @@
 def web_page():
-    webpage = open("index.html", "r")
+    print("open website")
+    with open("index.html", 'r') as file:
+        webpage = file.read()
+    print(type(webpage))
+    
     return webpage
 
 
