@@ -37,8 +37,6 @@ Sensor.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
 
 # this is the dynamic training data 
 training_data = []
-# this is the training data that is read from the data file 
-training_data_from_file = []
 datafilename = "trainData.txt"
 
 # get mac address
@@ -114,6 +112,7 @@ def updateStateTRAIN():
 def read_sensor():
     sens = str(Sensor.read())
     return sens
+
 # saves training_data to a file trainData.txt
 # each line is motorData,lightSensor
 def saveDataToFile():
@@ -124,9 +123,9 @@ def saveDataToFile():
     for ind, val in enumerate(training_data):
         lightSensor = val[1]
         motor = val[0]
-        f.write(str(lightSensor))
-        f.write(",")
         f.write(str(motor))
+        f.write(",")
+        f.write(str(lightSensor))
         f.write('\n')
     f.close()
 
@@ -136,21 +135,7 @@ def removeData(i):
     if(len(training_data) != 0):
         training_data.pop(i)
         saveDataToFile()
-
-# adds (motor, light) pair to training data 
-def addData(motor, light):
-    tup = (int(motor), int(light))
-    global training_data
-    training_data.append(tup)
-    saveDataToFile()
-  
-# updates training_data_from_file
-def updateDataReadFromFile(data_list):
-    print("DATA READ FROM FILE RUN")
-    print(data_list)
-    global training_data_from_file
-    training_data_from_file = data_list
-  
+ 
 def runData():
     global NN_index
     global global_TEST_motor
@@ -159,8 +144,7 @@ def runData():
     light_val = []
     motor_val = []
     print("Trainging data from file ")
-    print(training_data_from_file)
-    for (mot, light) in training_data_from_file:
+    for (mot, light) in training_data:
         dist = abs(sens - light)
         light_val.append(dist)
         motor_val.append(mot)
@@ -175,22 +159,8 @@ def runData():
     global_TEST_motor = pos
     motor.write_angle(180-pos)
 
-# reads the file where each line is the motor,light data
-# returns [(motor,light), (motor,light)]
-def readFileAndStoreData(filename):
-    with open("trainData.txt", "r") as values:
-        lines = values.readlines()
-    data_tuples = []
-    for l in lines:
-        as_list = l.split(",")
-        motor= as_list[0]
-        light = as_list[1]
-        tuples = (int(motor), int(light))
-        data_tuples.append(tuples)
-        updateDataReadFromFile(data_tuples)
-
-
-def add_pair(light, motor):
+# Adds data to the local memory
+def add_pair(motor, light):
     tup = (int(motor), int(light))
     global training_data
     training_data.append(tup)
@@ -201,6 +171,8 @@ def add_pair(light, motor):
 # returns "motor,light;motor,light" as a string
 # To avoid an error: If trainData.txt is empty make sure starts with line 1 
 def readFile():
+    global training_data
+    training_data = []
     with open("trainData.txt", "r") as values:
         lines = values.readlines()
     web_string = ""
@@ -211,10 +183,10 @@ def readFile():
             print("IN READ FILE")
             print(l)
             as_list = l.split(",")
-            motor= as_list[1]
-            light = as_list[0].split('\n')[0]
-            #add_pair(int(light), int(motor))
-            addData(int(motor), int(light))
+            motor= as_list[0]
+            light = as_list[1].split('\n')[0]
+            add_pair(int(motor), int(light))
+            #addData(int(motor), int(light))
             web_string = web_string + motor + "," + light + ";"
     else:
         web_string = "0"
@@ -238,7 +210,7 @@ while True:
         request = str(request)
 
             
-        print('Content = %s' % request)
+        #print('Content = %s' % request)
         
         if(STATE == 0):
             runData()
@@ -246,6 +218,7 @@ while True:
         # request to load the initial data that is stored  
         if request.find('/onLoad') == 6:
             # read current training data from file and send it to web browser
+            print("onLoad")
             reply = readFile()
             
         # setting the sensor reading     
@@ -280,7 +253,8 @@ while True:
             lit_val_save = motor_light.split("=")[1]
             print(mot_val_save)
             print(lit_val_save)
-            addData(int(mot_val_save), int(lit_val_save))
+            add_pair(int(mot_val_save), int(lit_val_save))
+            saveDataToFile()
                 
         # removes the last data from the list    
         if request.find('/?deletevalue') == 6:
@@ -293,7 +267,6 @@ while True:
             print("TEST clicked")
             # read the data from the file
             updateStateTEST()
-            readFileAndStoreData(datafilename)
         
         if request.find('/?stop') == 6:
             print("STOP clicked")
@@ -315,6 +288,6 @@ gc.collect()
 display.fill(0) # Clear Screen before Error
 display.show()
 
-display.text("Error - Restart", 20,20,1)
+display.text("Error - Restart", 10,20,1)
 display.show()
 s.close()
