@@ -9,7 +9,6 @@ i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
 class SENSORS:
     def __init__(self,connection=i2c):
         self.i2c=connection
-
         self.adx = adxl345.ADXL345(self.i2c)
         
         self.initial = [0, 4095]
@@ -73,5 +72,21 @@ class SENSORS:
         return int((self.final[1]-self.final[0]) / (self.initial[1]-self.initial[0]) * (value - self.initial[0]) + self.final[0])
   
     def readbattery(self):
-        return self.battery.read()
+        batterylevel=self.battery.read()
+
+        if(batterylevel>2850): #charging
+            return 'charging'
+            
+        elif(batterylevel>2700 and batterylevel <2875): #full charge
+            return 'full'
+        elif(batterylevel>2500 and batterylevel <2700): #medium charge
+            return 'half'
+        elif(batterylevel<2500): # low charge
+            return 'low'
+        else:
+            pass
+        
+        return ""
+        
+
         

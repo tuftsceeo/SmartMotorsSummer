@@ -1,5 +1,7 @@
 import sys
-def savetofile(pointstosave): # the points to save should have format of [[light, pot],[light,pot]]
+
+# appends to the file 
+def savetofile(pointtosave): # the points to save should have format of [light, mot]
     import os
     if(os.listdir().count('data.py')):
         import data
@@ -8,14 +10,14 @@ def savetofile(pointstosave): # the points to save should have format of [[light
         import data
         try:
             datapoints=data.points
-            datapoints.append(pointstosave)
+            datapoints.append(pointtosave)
         except:
-            datapoints.append(pointstosave)
+            datapoints.append(pointtosave)
         del sys.modules["data"]
         #getting ready to reimporting data file
     else:
         datapoints=[]
-        datapoints.append(pointstosave)
+        datapoints.append(pointtosave)
         print("new file")
     #writing files to the data.py
     
@@ -40,11 +42,15 @@ def readfile():
         if(data.points):
             return(data.points)
         else:
-            display.showmessage("No data saved")
+            #display.showmessage("No data saved")
+            print("no points")
             return([])
     else:
-        display.showmessage("No data saved")
+        #display.showmessage("No data saved")
+        print("data does not exist yet")
         return([])
     
         #also make this go home
+
+
 
