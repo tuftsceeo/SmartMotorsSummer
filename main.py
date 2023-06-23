@@ -16,6 +16,8 @@ import re
 import ubinascii
 import ujson
 
+import random
+
 from math import log
 from machine import Pin, SoftI2C, PWM, ADC
 
@@ -39,16 +41,18 @@ training_data = []
 training_data_from_file = []
 datafilename = "trainData.txt"
 
-
 # get mac address
 mac = ubinascii.hexlify(network.WLAN().config("mac")).decode()
 lastmac=bytearray(mac[-6:])
 lastmac[5]=lastmac[5]+1
 #SSID= 'ESP_'+lastmac.decode().upper()
 
+chan = random.randrange(1, 11)
+print("Using channel: ", chan)
 
-# Enable Access Point 
+# Enable Access Point
 wlan=network.WLAN(network.AP_IF)
+wlan.config(channel=chan)
 wlan.active(False)
 wlan.active(True)
 
