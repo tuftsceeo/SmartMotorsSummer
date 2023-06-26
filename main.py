@@ -1,279 +1,293 @@
-f=open("main.py","w")
-a='''
-from machine import Pin, SoftI2C, PWM, ADC
+import gc
+gc.collect()
 import time
-#import smarttools
 import servo
-import icons
 
+import ujson
+import network
+import ssd1306
 
-STATE=[[0,3],[0,4],[0,4],[0,3]]
-whereamI=0
-wherewasI=-1
-whenPressed=0
+import usocket as socket
+import random as r
+import re
 
+import ubinascii
+import ujson
+import random
+from math import log
+from machine import Pin, SoftI2C, PWM, ADC
 
-
-#STATE=[(ICONnumber,TotalIcons),...]
-# First number is ICON - default is 0 or first icon
-# Second is Total number of ICONS in the SCREEN - 3 icons on Homescreen, 2 icons on PlayScreen and so on
-#whereamI gives the SCREEN number I am at
-#STATE[whereamI] gives the selected icon and total number of icons on that screen
-
-#ICON
-#0 - FirstICON
-#1 - SecondICON
-#2- ThirdICON
-
-#SCREEN
-#0 - HOMESCREEN
-#1 - PlaySCREEN
-#2 - TrainSCREEN
-#3 - ConnectSCREEN
-
-#Battery
-MAX_BATTERY=2900
-MIN_BATTERY=2600
-#Defining all flags
-#Train screen flags
-add=False
-delete=False
-run=False
-
-#Play screen flags
-toggle=False
-pause=False
+from web import web_page
 
 i2c = SoftI2C(scl = Pin(7), sda = Pin(6))
-display = icons.SSD1306_SMART(128, 64, i2c)
+display = ssd1306.SSD1306_I2C(128, 64, i2c)
+
+# connect to wifi 
+wlan=network.WLAN(network.AP_IF)
+wlan.active(False)
+wlan.active(True)
+
+# connect servo
+motor = servo.Servo(Pin(2))
+motor.write_angle(90)
+
+# sensor pin GPIO5
+Sensor = ADC(Pin(5))
+Sensor.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
+
+# this is the dynamic training data 
+training_data = []
+datafilename = "trainData.txt"
+
+# get mac address
+mac = ubinascii.hexlify(network.WLAN().config("mac")).decode()
+lastmac=bytearray(mac[-6:])
+lastmac[5]=lastmac[5]+1
+#SSID= 'ESP_'+lastmac.decode().upper()
+
+chan = random.randrange(1, 11)
+print("Using channel: ", chan)
+
+# Enable Access Point
+wlan=network.WLAN(network.AP_IF)
+wlan.config(channel=chan)
+wlan.active(False)
+wlan.active(True)
 
 
-bdown = Pin(8, Pin.IN)
-bselect = Pin(9, Pin.IN)
-bup = Pin(10, Pin.IN)
+# get SSID
+SSID = wlan.config('essid')
 
-s = servo.Servo(Pin(2))
 
-#interrupt functions
-def decrease(Pin):
-    global whereamI
+# Wait for Connection and Update Display
+display.text(SSID, 20,20,1)
+display.show()
+print("Waiting for connection...")
+while (not wlan.isconnected()):
+    time.sleep(1)
+
+# Initialize Socket
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(('', 80))
+s.listen(5)
+
+# Wait 3 Seconds
+display.fill(0)
+display.text("Connecting .", 5,30,1)
+display.show()
+time.sleep(1)
+display.text("Connecting ..", 5,30,1)
+display.show()
+time.sleep(1)
+display.text("Connecting ...", 5,30,1)
+display.show()
+time.sleep(1)
+
+display.fill(0)
+display.show()
+    
+print("Wifi has been connected...")
+display.text(SSID, 20,20,1)
+print("Connect to IP address 192.168.4.1")
+display.text("Now connect to", 10,40,1)
+display.text("192.168.4.1", 20,50,1)
+display.show()
+
+STATE = 1 #STATE 1 = training, STATE 0 = testing/playing
+
+# during test, saves the motor value associated with the sensor 
+global_TEST_motor = 0
+
+def updateStateTEST():
     global STATE
-    global whenPressed
-    global changed
-    
-    if(time.ticks_ms()-whenPressed>500):
-        if(STATE[whereamI][0]>0):
-            STATE[whereamI][0]-=1
-        whenPressed=time.ticks_ms()
-        display.selector(whereamI,STATE[whereamI][0],STATE[whereamI][0]+1) #draw circle at selection position, and remove from the previous position
-        changed=True
-    
- 
+    if (STATE != 0):
+        STATE = 0
 
-def increase(Pin):
-    global whereamI
+def updateStateTRAIN():
     global STATE
-    global whenPressed
-    global changed
-
-    if(time.ticks_ms()-whenPressed>500):
-        if(STATE[whereamI][0]<STATE[whereamI][1]-1):
-            STATE[whereamI][0]+=1
-        whenPressed=time.ticks_ms()
-        display.selector(whereamI,STATE[whereamI][0],STATE[whereamI][0]-1) #draw circle at selection position, and remove from the previous position
-        changed=True
-   
-def selector(Pin):
-    #declare all global variables, include all flags
-    global whereamI
-    global STATE
-    global changed
-    global add
-    global delete
-    global save
-    time.sleep(0.5)
-
-    #Home screen
-    if(whereamI==0):
-        if(STATE[0][0]==0):
-            whereamI=1      #Train Screen
-        elif(STATE[0][0]==1):
-            whereamI=2      #Play Screen
-        elif(STATE[0][0]==2):
-            whereamI=3      #Settings Screen
-        display.fill(0)
-        display.selector(whereamI,STATE[whereamI][0],-1)
-        display.displayscreen(whereamI)
-        
-    #Train screen
-    elif(whereamI==1): 
-        if(STATE[1][0]==0):
-            add=True     #add data point         
-        elif(STATE[1][0]==1):
-            delete=True #delete data point
-        elif(STATE[1][0]==2):
-            whereamI=2 #run using the train data
-        elif(STATE[1][0]==3):
-            whereamI=0 # go back to homescreen
-            
-        display.fill(0)  #clean screen
-        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-        display.displayscreen(whereamI)                  # load relevant screen
-        
-    #Play screen 
-    elif(whereamI==2): 
-        if(STATE[2][0]==0):
-            add=True        # toggle screeen view     
-        elif(STATE[2][0]==1):
-            delete=True     # save data
-        elif(STATE[2][0]==2):
-            whereamI=2      # pause the run 
-        elif(STATE[2][0]==3):
-            whereamI=0      # Go back to home screen
-        
-        display.fill(0) # clear screen
-        display.selector(whereamI,STATE[whereamI][0],-1) # load the selector on relevant icon
-        display.displayscreen(whereamI)                  # load relevant screen
-        
+    if (STATE != 1):
+        STATE = 1
     
-  
-#setting interrupts for button presses
-bdown.irq(trigger=Pin.IRQ_RISING, handler=decrease)
-bup.irq(trigger=Pin.IRQ_RISING, handler=increase)
-bselect.irq(trigger=Pin.IRQ_RISING, handler=selector)
-# pot pin GPIO3, A1, D1
+def read_sensor():
+    sens = str(Sensor.read())
+    return sens
 
-pot = ADC(Pin(3))
-pot.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-# pot.read() returns integers in [0, 4095]
-
-
-# light pin GPIO5
-light = ADC(Pin(5))
-light.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-
-
-battery = ADC(Pin(4))
-battery.atten(ADC.ATTN_11DB) # the pin expects a voltage range up to 3.3V
-
-# plot ranges from 4,4 to 78, 59 for the box not to overlap with the border
-
-def mappot(value):
-    initial = [0, 4095]
-    final =  [0, 180]
-    return int((final[1]-final[0]) / (initial[1]-initial[0]) * (value - initial[0]) + final[0])
-
-
-def readSensor():
-    l=[]
-    p=[]  
-    for i in range(1000):
-        l.append(light.read())
-        p.append(pot.read())
-        time.sleep(0.00001)
-    l.sort()
-    p.sort()
-    l=l[300:600]
-    p=p[300:600]
-    avlight=sum(l)/len(l)
-    avpos=sum(p)/len(p)
-    
-    point = avlight, mappot(avpos)
-    return point
-
-def savetofile(points):
-    f=open("data.py","w")
-    f.write("tada")
+# saves training_data to a file trainData.txt
+# each line is motorData,lightSensor
+def saveDataToFile():
+    print("SAVING DATA TO FILE")
+    print(training_data)
+    f=open("trainData.txt","w")
+    length = len(training_data)
+    for ind, val in enumerate(training_data):
+        lightSensor = val[1]
+        motor = val[0]
+        f.write(str(motor))
+        f.write(",")
+        f.write(str(lightSensor))
+        f.write('\n')
     f.close()
+
+def removeData(i):
+    global training_data
+    print(training_data)
+    if(len(training_data) != 0):
+        training_data.pop(i)
+        saveDataToFile()
+ 
+def runData():
+    global NN_index
+    global global_TEST_motor
+    sens = Sensor.read()
+    sens = int((100 * int(t))/4095)
+    light_val = []
+    motor_val = []
+    print("Trainging data from file ")
+    for (mot, light) in training_data:
+        dist = abs(sens - light)
+        light_val.append(dist)
+        motor_val.append(mot)
+    # get the index of the least light_val
+   
+    NN_index = light_val.index(min(light_val))
+    pos = motor_val[NN_index]
+    print("SENSOR VALUE IS...")
+    print(sens)
+    print("MOTOR VALUE ROTATE TO IS...")
+    print(pos)    
+    global_TEST_motor = pos
+    motor.write_angle(180-pos)
+
+# Adds data to the local memory
+def add_pair(motor, light):
+    tup = (int(motor), int(light))
+    global training_data
+    training_data.append(tup)
+
+
+# New function for displaying current values in text file 
+# reads the file where each line is the motor,light data
+# returns "motor,light;motor,light" as a string
+# To avoid an error: If trainData.txt is empty make sure starts with line 1 
+def readFile():
+    global training_data
+    training_data = []
+    with open("trainData.txt", "r") as values:
+        lines = values.readlines()
+    web_string = ""
+    print(lines)
+    print(len(lines))
+    if (len(lines) > 0):
+        for l in lines:
+            print("IN READ FILE")
+            print(l)
+            as_list = l.split(",")
+            motor= as_list[0]
+            light = as_list[1].split('\n')[0]
+            add_pair(int(motor), int(light))
+            #addData(int(motor), int(light))
+            web_string = web_string + motor + "," + light + ";"
+    else:
+        web_string = "0"
+    print(training_data)
+    return web_string
     
-
-def nearestNeighbor(data, point):
-    try:
-        point = point[0]
-    except TypeError:
-        print("error")
-        pass
-    if len(data) == 0:
-        return 0
-    diff = 10000
-    test = None
-    for i in data:
-        if abs(i[0] - point) <= diff:
-            diff = abs(i[0] - point)
-            test = i
-    return test
-
-
-point = [9,9]
-points = []
-
-#setup with homescreen
-#starts with whereamI=0
-display.selector(whereamI,STATE[whereamI][0],-1)
-oldpoint=[-1,-1]
-#display.displayscreen(whereamI)
-oldbattery=1
+    
 while True:
-    #newbattery=battery.read()
-    #display.showbattery(oldbattery,0)
-    #display.showbattery(newbattery,1)
-    if(whereamI==1): # Training Screen
-        point = readSensor() 
-        if(add):
-            points.append(list(point))
-            display.graph(oldpoint, point, points)
-            print(points)
+    try:
+        conn, addr = s.accept()
+        reply = web_page()
+        #heartbeat
+        if addr[1]%10<5:
+            display.rect(0,0,2,2,1)
+            display.show()
+        else:
+            display.rect(0,0,2,2,0)
+            display.show()
+        print('Got a connection from %s' % str(addr))
+        request = conn.recv(1024)
+        request = str(request)
+
             
-        elif(delete):
-            if(points): #delete only when there is something
-                points.pop()
-
-                
-        elif(run):
-            whereamI=2 # trigger play screen
-            nearestNeighbor(points,point)
-            
-        if(not point==oldpoint): #only when point is different now
-            s.write_angle(point[1])
-            display.graph(oldpoint, point, points)
-
-        #reset all flags
-        add=False
-        delete=False
-        save=False
-        oldpoint=point
-
-    elif(whereamI==2): # Play Screen
-        point=readSensor()
+        #print('Content = %s' % request)
         
-        if(toggle):
-            # put toggle function here
-            pass
+        if(STATE == 0):
+            runData()
             
-        elif(save):
-            # save function here
-            savetofile(points)
-                
-        elif(pause):
-            #pause the data
-            pass
+        # request to load the initial data that is stored  
+        if request.find('/onLoad') == 6:
+            # read current training data from file and send it to web browser
+            print("onLoad")
+            reply = readFile()
             
-            
-        if(not point==oldpoint): #only when point is different now
-            point = nearestNeighbor(points,point)
-            print(point)
-            s.write_angle(point[1])
-            display.graph(oldpoint, point, points)
-
-        #reset all flags
-        add=False
-        delete=False
-        save=False
-        oldpoint=point
-    #time.sleep(1)
-    #oldbattery=newbattery
+        # setting the sensor reading     
+        if request.find('/getDHT') == 6:
+            t = read_sensor()
+            x = int((100 * int(t))/4095)
     
-'''
-f.write(a)
-f.close()
+            # if on testing, then send the nearest motor value 
+            if (STATE == 0):
+                motor_rotation = str(global_TEST_motor)
+                NN_index_str = str(NN_index)
+            # otherwise send "-1"
+            else:
+                motor_rotation = "-1"
+                NN_index_str = "-1"
+            # set sensor variable
+            reply = str(x) + "|" + motor_rotation + "|" + NN_index_str
+        
+        if request.find('/slider') == 6:
+            splitval = request.split("=", 1)
+            number = splitval[1].split(" ", 1)
+            value = number[0]
+            motor.write_angle(180-int(value))
+            
+                
+        if request.find('/?addvalue') == 6:
+            print("Add Value")
+            # request comes in form /?addvalue="+sliderValue+"="+sensorValue
+            split_values = request.split("=", 1)
+            motor_light = split_values[1].split(" ", 1)[0]
+            mot_val_save = motor_light.split("=")[0]
+            lit_val_save = motor_light.split("=")[1]
+            print(mot_val_save)
+            print(lit_val_save)
+            add_pair(int(mot_val_save), int(lit_val_save))
+            saveDataToFile()
+                
+        # removes the last data from the list    
+        if request.find('/?deletevalue') == 6:
+            split_values = request.split("=", 1)
+            i = int(split_values[1].split(" ", 1)[0])
+            print(i)
+            removeData(i)
+        
+        if request.find('/?test') == 6:
+            print("TEST clicked")
+            # read the data from the file
+            updateStateTEST()
+        
+        if request.find('/?stop') == 6:
+            print("STOP clicked")
+            # read the data from the file
+            updateStateTRAIN()
+            
+        conn.send('HTTP/1.1 200 OK\n')
+        conn.send('Content-Type: text/html\n')
+        conn.send('Connection: close\n\n')
+        conn.sendall(reply)
+        conn.close()       
+        
+    except Exception as e:
+        print("Main Loop Exception - ERROR")
+        print(e)
+        break
+gc.collect()
 
+display.fill(0) # Clear Screen before Error
+display.show()
+
+display.text("Error - Restart", 10,20,1)
+display.show()
+s.close()
