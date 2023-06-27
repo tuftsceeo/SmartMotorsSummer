@@ -14,7 +14,7 @@
         outline: none;
         border: none;
         cursor: pointer;
-        padding: 30px 0px;
+        height: 12vh;
         width: 100%;
       }
       .tab-link:hover {
@@ -70,13 +70,15 @@
         }
 
         .explore-box {
-          width: 80vw;
+          width: auto;
           height: auto;
-          padding-bottom: 0;
+          padding-bottom: 0px;
           padding: 20px;
-          margin: auto;
-          margin-top: 20px;
-          margin-bottom: 20px;
+          margin: 20px 0;
+        }
+
+        #wrapper {
+          width: 100vw;
         }
 
         h1 {
@@ -93,19 +95,20 @@
       }
 
       #wrapper {
-        width: 90vw;
+        width: 80vw;
         margin: auto;
       }
 
       #motor-slider {
-        width: 80%;
+        width: 50%;
         display: block;
         padding: 20px;
-        margin: auto;
+        margin: 20px auto;
+        -webkit-appearance: slider-vertical;
       }
 
       .gauge {
-        max-width: 350px;
+        max-width: 90%;
         font-family: "Roboto", sans-serif;
         font-size: 32px;
         color: #232323;
@@ -160,7 +163,7 @@
         max-width: 350px;
         height: 40px;
         background: #fff47c;
-        border-radius: 5px;
+        border-radius: 10px;
         overflow: hidden;
         margin: auto;
         border-style: solid;
@@ -189,6 +192,18 @@
         margin: auto;
         margin-bottom: 20px;
       }
+
+      #canvas-graph {
+        width: 401;
+        height: 340;
+        border: 0px solid #d3d3d3;
+        background-color: black;
+      }
+
+      .page {
+        width: 100vw;
+        height: 88vh;
+      }
     </style>
   </head>
 
@@ -198,10 +213,48 @@
       <button class="tab-link"><h1>Train</h1></button>
       <button class="tab-link"><h1>Play</h1></button>
     </div>
-    <div id="wrapper">
-      <div class="flex-row">
-        <div id="motor-box" class="explore-box">
-          <h2>Motor</h2>
+    <div id="explore-page" class="page">
+      <div id="wrapper">
+        <div class="flex-row">
+          <div id="motor-box" class="explore-box">
+            <h2>Motor</h2>
+            <input
+              type="range"
+              min="1"
+              max="180"
+              value="90"
+              id="motor-slider"
+            />
+            <div class="gauge">
+              <div class="gauge__body">
+                <div class="gauge__fill"></div>
+                <div class="gauge__cover"></div>
+              </div>
+            </div>
+          </div>
+          <div id="sensor-box" class="explore-box">
+            <h2>Sensor</h2>
+            <select id="sensor-selector">
+              <option class="sensor-option">Select your sensor</option>
+              <option class="sensor-option">Light Sensor</option>
+              <option class="sensor-option">Distance Sensor</option>
+              <option class="sensor-option">Dial</option>
+            </select>
+
+            <div id="sensor-icon"></div>
+
+            <div class="progress">
+              <div class="progress__fill"></div>
+              <span class="progress__text">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="train-page" class="page">
+      <div class="wrapper">
+        <div class="flex-row">
           <input type="range" min="1" max="180" value="90" id="motor-slider" />
           <div class="gauge">
             <div class="gauge__body">
@@ -210,22 +263,13 @@
             </div>
           </div>
         </div>
-        <div id="sensor-box" class="explore-box">
-          <h2>Sensor</h2>
-          <select id="sensor-selector">
-            <option class="sensor-option">Select your sensor</option>
-            <option class="sensor-option">Light Sensor</option>
-            <option class="sensor-option">Distance Sensor</option>
-            <option class="sensor-option">Dial</option>
-          </select>
 
-          <div id="sensor-icon"></div>
-
-          <div class="progress">
-            <div class="progress__fill"></div>
-            <span class="progress__text">0%</span>
-          </div>
+        <div class="progress">
+          <div class="progress__fill"></div>
+          <span class="progress__text">0%</span>
         </div>
+
+        <canvas id="canvas-graph" class="canvas-graph"></canvas>
       </div>
     </div>
   </body>
