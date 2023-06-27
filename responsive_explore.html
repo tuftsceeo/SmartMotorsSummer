@@ -22,8 +22,8 @@
       }
       .explore-box {
         text-align: center;
-        width: 60%;
-        height: 40vh;
+        width: 50vw;
+        height: 50vh;
         padding: 20px;
         margin: 20px;
         border-radius: 20px;
@@ -64,13 +64,29 @@
         justify-content: center;
       }
 
-      @media (max-width: 950px) {
+      @media (max-width: 850px) {
         .flex-row {
           display: block;
         }
 
         .explore-box {
           width: 80%;
+          height: auto;
+          margin: auto;
+          margin-top: 20px;
+          margin-bottom: 20px;
+        }
+
+        h1 {
+          font-size: 20px;
+        }
+
+        h2 {
+          font-size: 16px;
+        }
+
+        h3 {
+          font-size: 16px;
         }
       }
 
@@ -83,13 +99,15 @@
         width: 80%;
         display: block;
         padding: 20px;
+        margin: auto;
       }
 
       .gauge {
-        max-width: 250px;
+        max-width: 350px;
         font-family: "Roboto", sans-serif;
         font-size: 32px;
         color: #232323;
+        margin: auto;
       }
       .gauge__body {
         width: 100%;
@@ -130,7 +148,44 @@
 
       #sensor-selector {
         height: 30px;
-        margin: 30px;
+        margin: auto;
+        margin-bottom: 20px;
+        margin-top: 20px;
+      }
+
+      .progress {
+        position: relative;
+        max-width: 350px;
+        height: 40px;
+        background: #fff47c;
+        border-radius: 5px;
+        overflow: hidden;
+        margin: auto;
+        border-style: solid;
+      }
+
+      .progress__fill {
+        width: 0%;
+        height: 100%;
+        background: #ffd65c;
+        transition: all 0.2s;
+      }
+
+      .progress__text {
+        position: absolute;
+        top: 50%;
+        right: 5px;
+        transform: translateY(-50%);
+        font: bold 16px "Quicksand", sans-serif;
+        color: #000000;
+      }
+
+      #sensor-icon {
+        height: 10vw;
+        width: 10vw;
+        background-color: white;
+        margin: auto;
+        margin-bottom: 20px;
       }
     </style>
   </head>
@@ -161,6 +216,13 @@
             <option class="sensor-option">Distance Sensor</option>
             <option class="sensor-option">Dial</option>
           </select>
+
+          <div id="sensor-icon"></div>
+
+          <div class="progress">
+            <div class="progress__fill"></div>
+            <span class="progress__text">0%</span>
+          </div>
         </div>
       </div>
     </div>
