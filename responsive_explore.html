@@ -58,21 +58,22 @@
         margin: 0px;
       }
 
-      .flex-row {
+      .flex,
+      .responsive-flex {
         display: flex;
         margin: auto;
         justify-content: center;
+        margin: 20px;
       }
 
       @media (max-width: 850px) {
-        .flex-row {
+        .responsive-flex {
           display: block;
         }
 
         .explore-box {
           width: auto;
           height: auto;
-          padding-bottom: 0px;
           padding: 20px;
           margin: 20px 0;
         }
@@ -100,55 +101,34 @@
       }
 
       #motor-slider {
-        width: 50%;
-        display: block;
-        padding: 20px;
-        margin: 20px auto;
         -webkit-appearance: slider-vertical;
+        margin: 0;
+        padding: 20px 0px;
       }
 
       .gauge {
-        max-width: 90%;
-        font-family: "Roboto", sans-serif;
-        font-size: 32px;
-        color: #232323;
-        margin: auto;
+        width: 40%;
       }
-      .gauge__body {
+      .gauge-body {
         width: 100%;
         height: 0;
-        padding-bottom: 50%;
+        padding-bottom: 200%;
         background: #232323;
         position: relative;
-        border-top-left-radius: 100% 200%;
-        border-top-right-radius: 100% 200%;
+        border-top-left-radius: 200% 100%;
+        border-bottom-left-radius: 200% 100%;
         overflow: hidden;
       }
-      .gauge__fill {
+      .gauge-fill {
         position: absolute;
-        top: 100%;
-        left: 0;
-        width: inherit;
+        left: 100%;
+        top: 0;
         height: 100%;
+        width: 100%;
         background: #06a5ff;
-        transform-origin: center top;
-        transform: rotate(0.25turn);
+        transform-origin: center left;
         transition: transform 0.2s ease-out;
-      }
-      .gauge__cover {
-        width: 75%;
-        height: 150%;
-        background: #ffffff;
-        border-radius: 50%;
-        position: absolute;
-        top: 25%;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-bottom: 25%;
-        box-sizing: border-box;
+        transform: rotate(0.25turn);
       }
 
       #sensor-selector {
@@ -204,48 +184,63 @@
         width: 100vw;
         height: 88vh;
       }
+      .explore-box-padding {
+        padding: 20px;
+      }
     </style>
   </head>
 
   <body>
     <div class="tab-container">
-      <button class="tab-link"><h1>Explore</h1></button>
-      <button class="tab-link"><h1>Train</h1></button>
-      <button class="tab-link"><h1>Play</h1></button>
+      <button id="explore-tab" class="tab-link" onclick="changePage('explore')">
+        <h1>Explore</h1>
+      </button>
+      <button id="train-tab" class="tab-link" onclick="changePage('train')">
+        <h1>Train</h1>
+      </button>
+      <button id="play-tab" class="tab-link" onclick="changePage('play')">
+        <h1>Play</h1>
+      </button>
     </div>
     <div id="explore-page" class="page">
       <div id="wrapper">
-        <div class="flex-row">
+        <div class="responsive-flex">
           <div id="motor-box" class="explore-box">
-            <h2>Motor</h2>
-            <input
-              type="range"
-              min="1"
-              max="180"
-              value="90"
-              id="motor-slider"
-            />
-            <div class="gauge">
-              <div class="gauge__body">
-                <div class="gauge__fill"></div>
-                <div class="gauge__cover"></div>
+            <div class="explore-box-padding">
+              <h2>Motor</h2>
+              <div id="motor-items" class="flex">
+                <div class="gauge">
+                  <div class="gauge-body">
+                    <div class="gauge-fill"></div>
+                    <div class="gauge-cover"></div>
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="180"
+                  value="90"
+                  id="motor-slider"
+                />
               </div>
             </div>
           </div>
           <div id="sensor-box" class="explore-box">
-            <h2>Sensor</h2>
-            <select id="sensor-selector">
-              <option class="sensor-option">Select your sensor</option>
-              <option class="sensor-option">Light Sensor</option>
-              <option class="sensor-option">Distance Sensor</option>
-              <option class="sensor-option">Dial</option>
-            </select>
+            <div class="explore-box-padding">
+              <h2>Sensor</h2>
+              <select id="sensor-selector">
+                <option class="sensor-option">Select your sensor</option>
+                <option class="sensor-option">Light Sensor</option>
+                <option class="sensor-option">Distance Sensor</option>
+                <option class="sensor-option">Dial</option>
+              </select>
 
-            <div id="sensor-icon"></div>
+              <div id="sensor-icon"></div>
 
-            <div class="progress">
-              <div class="progress__fill"></div>
-              <span class="progress__text">0%</span>
+              <div class="progress">
+                <div class="progress__fill"></div>
+                <span class="progress__text">0%</span>
+              </div>
             </div>
           </div>
         </div>
@@ -255,22 +250,47 @@
     <div id="train-page" class="page">
       <div class="wrapper">
         <div class="flex-row">
-          <input type="range" min="1" max="180" value="90" id="motor-slider" />
           <div class="gauge">
-            <div class="gauge__body">
-              <div class="gauge__fill"></div>
-              <div class="gauge__cover"></div>
+            <div class="gauge-body">
+              <div class="gauge-fill"></div>
             </div>
           </div>
+          <input type="range" min="0" max="180" value="90" id="motor-slider" />
+          <canvas
+            id="canvas-graph"
+            width="401"
+            height="340"
+            style="border: 0px solid #d3d3d3"
+          ></canvas>
         </div>
 
         <div class="progress">
           <div class="progress__fill"></div>
           <span class="progress__text">0%</span>
         </div>
-
-        <canvas id="canvas-graph" class="canvas-graph"></canvas>
       </div>
     </div>
+    <div id="play-page" class="page"></div>
+    <script>
+      //hide and show the div for each page when the user clicks on tabs
+      function changePage(pageName) {
+        if (pageName == "explore") {
+          document.getElementById("explore-page").style.display = "block";
+          document.getElementById("train-page").style.display = "none";
+          document.getElementById("play-page").style.display = "none";
+        }
+        if (pageName == "train") {
+          document.getElementById("explore-page").style.display = "none";
+          document.getElementById("train-page").style.display = "block";
+          document.getElementById("play-page").style.display = "none";
+        }
+        if (pageName == "play") {
+          document.getElementById("explore-page").style.display = "none";
+          document.getElementById("train-page").style.display = "none";
+          document.getElementById("play-page").style.display = "block";
+        }
+      }
+      changePage("explore");
+    </script>
   </body>
 </html>
