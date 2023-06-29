@@ -22,10 +22,10 @@
       }
       .explore-box {
         text-align: center;
-        width: 40%;
-        height: 0px;
-        padding-bottom: 40%;
+        width: 40vw;
+        height: 40vw;
         margin: 20px;
+        padding: 20px;
         border-radius: 20px;
       }
 
@@ -62,24 +62,25 @@
       .responsive-flex {
         display: flex;
         margin: auto;
-        justify-content: center;
-        margin: 20px;
+        margin-top: 20px;
+        justify-content: space-around;
       }
 
-      @media (max-width: 850px) {
+      @media (max-width: 1000px) {
         .responsive-flex {
           display: block;
         }
 
         .explore-box {
-          width: auto;
-          height: auto;
-          padding: 20px;
-          margin: 20px 0;
+          width: 32vh;
+          height: 32vh;
+          margin: auto;
+          margin-bottom: 20px;
         }
 
         #wrapper {
           width: 100vw;
+          height: 100vh;
         }
 
         h1 {
@@ -87,23 +88,24 @@
         }
 
         h2 {
-          font-size: 16px;
+          font-size: 20px;
         }
 
         h3 {
-          font-size: 16px;
+          font-size: 20px;
         }
       }
 
       #wrapper {
-        width: 80vw;
+        width: 100vw;
         margin: auto;
       }
 
       #motor-slider {
         -webkit-appearance: slider-vertical;
         margin: 0;
-        padding: 20px 0px;
+        padding: 0;
+        width: 60px;
       }
 
       .gauge {
@@ -140,10 +142,10 @@
 
       .progress {
         position: relative;
-        max-width: 350px;
-        height: 40px;
+        max-width: 450px;
+        height: 50px;
         background: #fff47c;
-        border-radius: 10px;
+        border-radius: 20px;
         overflow: hidden;
         margin: auto;
         border-style: solid;
@@ -166,8 +168,8 @@
       }
 
       #sensor-icon {
-        height: 10vw;
-        width: 10vw;
+        height: 8vh;
+        width: 8vh;
         background-color: white;
         margin: auto;
         margin-bottom: 20px;
@@ -183,9 +185,6 @@
       .page {
         width: 100vw;
         height: 88vh;
-      }
-      .explore-box-padding {
-        padding: 20px;
       }
     </style>
   </head>
@@ -206,23 +205,21 @@
       <div id="wrapper">
         <div class="responsive-flex">
           <div id="motor-box" class="explore-box">
-            <div class="explore-box-padding">
-              <h2>Motor</h2>
-              <div id="motor-items" class="flex">
-                <div class="gauge">
-                  <div class="gauge-body">
-                    <div class="gauge-fill"></div>
-                    <div class="gauge-cover"></div>
-                  </div>
+            <h2>Motor</h2>
+            <div id="motor-items" class="flex">
+              <div class="gauge">
+                <div class="gauge-body">
+                  <div class="gauge-fill"></div>
+                  <div class="gauge-cover"></div>
                 </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="180"
-                  value="90"
-                  id="motor-slider"
-                />
               </div>
+              <input
+                type="range"
+                min="1"
+                max="180"
+                value="90"
+                id="motor-slider"
+              />
             </div>
           </div>
           <div id="sensor-box" class="explore-box">
@@ -249,28 +246,60 @@
 
     <div id="train-page" class="page">
       <div class="wrapper">
-        <div class="flex-row">
-          <div class="gauge">
-            <div class="gauge-body">
-              <div class="gauge-fill"></div>
+        <div class="responsive-flex">
+          <div class="flex">
+            <div class="gauge">
+              <div class="gauge-body">
+                <div class="gauge-fill"></div>
+              </div>
             </div>
+            <input
+              type="range"
+              min="0"
+              max="180"
+              value="90"
+              id="motor-slider"
+            />
+            <canvas
+              id="canvas-graph"
+              width="401"
+              height="340"
+              style="border: 0px solid #d3d3d3"
+            ></canvas>
           </div>
-          <input type="range" min="0" max="180" value="90" id="motor-slider" />
-          <canvas
-            id="canvas-graph"
-            width="401"
-            height="340"
-            style="border: 0px solid #d3d3d3"
-          ></canvas>
-        </div>
 
-        <div class="progress">
-          <div class="progress__fill"></div>
-          <span class="progress__text">0%</span>
+          <div class="progress">
+            <div class="progress__fill"></div>
+            <span class="progress__text">0%</span>
+          </div>
+          <div id="training-values">
+            <h3>Training Values</h3>
+            <table id="table">
+              <thead>
+                <th>Sensor</th>
+                <th>Motor</th>
+                <th>Delete</th>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+            <input type="button" value="Add Value" />
+          </div>
         </div>
       </div>
     </div>
-    <div id="play-page" class="page"></div>
+    <div id="play-page" class="page">
+      <div id="training-values">
+        <h3>Training Values</h3>
+        <table id="table">
+          <thead>
+            <th>Sensor</th>
+            <th>Motor</th>
+            <th>Delete</th>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
     <script>
       //hide and show the div for each page when the user clicks on tabs
       function changePage(pageName) {
