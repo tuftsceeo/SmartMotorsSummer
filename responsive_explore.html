@@ -5,6 +5,9 @@
       * {
         font-family: Arial;
       }
+
+      /* tabs */
+
       .tab-container {
         display: flex;
       }
@@ -14,16 +17,19 @@
         outline: none;
         border: none;
         cursor: pointer;
-        height: 12vh;
+        height: 100px;
         width: 100%;
       }
       .tab-link:hover {
         background-color: #777;
       }
+
+      /* motor and sensor square boxes on the explore page */
+
       .explore-box {
         text-align: center;
-        width: 40vw;
-        height: 40vw;
+        width: 400px;
+        height: 400px;
         margin: 20px;
         padding: 20px;
         border-radius: 20px;
@@ -37,80 +43,75 @@
         background-color: rgba(6, 165, 255, 0.5);
       }
 
+      /* fonts */
+
       h1 {
         font-size: 40px;
-        padding: 0px;
-        border: 0px;
-        margin: 0px;
       }
 
       h2 {
         font-size: 28px;
+      }
+
+      h3 {
+        font-size: 25px;
+      }
+
+      p {
+        font-size: 20px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
         padding: 0px;
         border: 0px;
         margin: 0px;
       }
 
-      h3 {
-        font-size: 25px;
-        padding: 0px;
-        border: 0px;
-        margin: 0px;
-      }
+      /* containers */
 
       .flex,
       .responsive-flex {
         display: flex;
         margin: auto;
         margin-top: 20px;
-        justify-content: space-around;
+        justify-content: center;
       }
 
-      @media (max-width: 1000px) {
-        .responsive-flex {
-          display: block;
-        }
-
-        .explore-box {
-          width: 32vh;
-          height: 32vh;
-          margin: auto;
-          margin-bottom: 20px;
-        }
-
-        #wrapper {
-          width: 100vw;
-          height: 100vh;
-        }
-
-        h1 {
-          font-size: 20px;
-        }
-
-        h2 {
-          font-size: 20px;
-        }
-
-        h3 {
-          font-size: 20px;
-        }
+      .flex-column {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
       }
 
-      #wrapper {
-        width: 100vw;
+      .page {
         margin: auto;
       }
 
-      #motor-slider {
+      .sensor-items {
+        margin-top: 20px;
+      }
+
+      .training-values {
+        margin: 20px;
+        text-align: center;
+      }
+
+      /* motor slider and gauge */
+
+      .motor-slider {
         -webkit-appearance: slider-vertical;
         margin: 0;
-        padding: 0;
+        padding: 0px 20px;
         width: 60px;
       }
 
       .gauge {
-        width: 40%;
+        width: 170px;
       }
+
       .gauge-body {
         width: 100%;
         height: 0;
@@ -133,32 +134,27 @@
         transform: rotate(0.25turn);
       }
 
-      #sensor-selector {
-        height: 30px;
-        margin: auto;
-        margin-bottom: 20px;
-        margin-top: 20px;
-      }
+      /* sensor progress bar */
 
-      .progress {
+      .sensor-bar {
         position: relative;
         max-width: 450px;
         height: 50px;
         background: #fff47c;
-        border-radius: 20px;
+        border-radius: 10px;
         overflow: hidden;
         margin: auto;
         border-style: solid;
       }
 
-      .progress__fill {
+      .sensor-bar-fill {
         width: 0%;
         height: 100%;
         background: #ffd65c;
         transition: all 0.2s;
       }
 
-      .progress__text {
+      .sensor-bar-text {
         position: absolute;
         top: 50%;
         right: 5px;
@@ -167,29 +163,122 @@
         color: #000000;
       }
 
-      #sensor-icon {
-        height: 8vh;
-        width: 8vh;
+      /* buttons */
+
+      #sensor-selector {
+        max-width: 200px;
+        max-height: 50px;
+        margin: auto;
+        margin-bottom: 20px;
+        margin-top: 20px;
+        border-radius: 10px;
+        font-size: 25px;
+        padding: 10px;
+      }
+
+      .button {
+        margin-top: 20px;
+        border: none;
+        border-radius: 20px;
+        padding: 20px;
+        font-size: 25px;
+      }
+
+      .button:hover {
+        box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.15);
+        transition: box-shadow 0.3s ease-in-out;
+      }
+
+      #add-value {
+        background-color: #3adb5e;
+      }
+
+      #add-value:hover {
+        background-color: #55e575;
+      }
+
+      /* static graphics */
+
+      .sensor-icon {
+        height: 50px;
+        max-width: 50px;
         background-color: white;
         margin: auto;
         margin-bottom: 20px;
       }
 
-      #canvas-graph {
-        width: 401;
-        height: 340;
-        border: 0px solid #d3d3d3;
-        background-color: black;
+      .dividing-line {
+        height: 2px;
+        border-radius: 1px;
+        width: 100%;
+        display: none;
+        background: black;
+        margin-bottom: 20px;
       }
 
-      .page {
-        width: 100vw;
-        height: 88vh;
+      .motor-label,
+      .sensor-label {
+        text-align: center;
+        margin: 20px;
+      }
+      .motor-label {
+        writing-mode: vertical-rl;
+        transform: scale(-1);
+      }
+
+      /* training values table formatting */
+
+      td,
+      th {
+        padding: 20px;
+      }
+
+      td {
+        border: 2px solid black;
+      }
+
+      table {
+        border-radius: 20px;
+        background: black;
+        color: white;
+        margin: 20px auto;
+        border-collapse: collapse;
+      }
+
+      /* canvas graph */
+
+      #canvas-graph {
+        border: none;
+        background-color: red;
+      }
+
+      /* breakpoint */
+
+      @media (max-width: 1000px) {
+        .responsive-flex {
+          display: block;
+        }
+
+        .explore-box {
+          width: 200px;
+          height: 200px;
+          margin: auto;
+          margin-bottom: 20px;
+        }
+
+        .gauge {
+          width: 75px;
+        }
+
+        .dividing-line {
+          display: block;
+        }
       }
     </style>
   </head>
 
   <body>
+    <! -- tabs -->
     <div class="tab-container">
       <button id="explore-tab" class="tab-link" onclick="changePage('explore')">
         <h1>Explore</h1>
@@ -201,53 +290,56 @@
         <h1>Play</h1>
       </button>
     </div>
+    <! -- explore page -->
     <div id="explore-page" class="page">
-      <div id="wrapper">
-        <div class="responsive-flex">
-          <div id="motor-box" class="explore-box">
-            <h2>Motor</h2>
-            <div id="motor-items" class="flex">
-              <div class="gauge">
-                <div class="gauge-body">
-                  <div class="gauge-fill"></div>
-                  <div class="gauge-cover"></div>
-                </div>
+      <div class="responsive-flex">
+        <div id="motor-box" class="explore-box">
+          <h2>Motor</h2>
+          <div id="motor-items" class="flex">
+            <div class="gauge">
+              <div class="gauge-body">
+                <div class="gauge-fill"></div>
+                <div class="gauge-cover"></div>
               </div>
-              <input
-                type="range"
-                min="1"
-                max="180"
-                value="90"
-                id="motor-slider"
-              />
             </div>
+            <input
+              type="range"
+              min="1"
+              max="180"
+              value="90"
+              class="motor-slider"
+              onchange="moveMotor(this)"
+            />
           </div>
-          <div id="sensor-box" class="explore-box">
-            <div class="explore-box-padding">
-              <h2>Sensor</h2>
-              <select id="sensor-selector">
-                <option class="sensor-option">Select your sensor</option>
-                <option class="sensor-option">Light Sensor</option>
-                <option class="sensor-option">Distance Sensor</option>
-                <option class="sensor-option">Dial</option>
-              </select>
+        </div>
+        <div id="sensor-box" class="explore-box">
+          <div class="explore-box-padding">
+            <h2>Sensor</h2>
+            <select id="sensor-selector" onchange="sensorSelect()">
+              <option class="sensor-option" value="none">Select sensor</option>
+              <option class="sensor-option" value="light">Light</option>
+              <option class="sensor-option" value="distance">Distance</option>
+              <option class="sensor-option" value="dial">Dial</option>
+            </select>
 
-              <div id="sensor-icon"></div>
-
-              <div class="progress">
-                <div class="progress__fill"></div>
-                <span class="progress__text">0%</span>
-              </div>
+            <div class="sensor-icon"></div>
+            <p id="sensor-low"></p>
+            <div class="sensor-bar">
+              <div class="sensor-bar-fill"></div>
+              <span class="sensor-bar-text">0%</span>
             </div>
+            <p id="sensor-high"></p>
           </div>
         </div>
       </div>
     </div>
-
+    <! -- train page -->
     <div id="train-page" class="page">
-      <div class="wrapper">
-        <div class="responsive-flex">
+      <input id="add-value" class="button" type="button" value="Add Value" />
+      <div class="responsive-flex">
+        <div class="flex-column">
           <div class="flex">
+            <h2 class="motor-label">Motor</h2>
             <div class="gauge">
               <div class="gauge-body">
                 <div class="gauge-fill"></div>
@@ -258,43 +350,41 @@
               min="0"
               max="180"
               value="90"
-              id="motor-slider"
+              class="motor-slider"
+              onchange="moveMotor(this)"
             />
-            <canvas
-              id="canvas-graph"
-              width="401"
-              height="340"
-              style="border: 0px solid #d3d3d3"
-            ></canvas>
+            <canvas id="canvas-graph" width="450" height="350"></canvas>
           </div>
-
-          <div class="progress">
-            <div class="progress__fill"></div>
-            <span class="progress__text">0%</span>
+          <div id="sensor-items">
+            <div class="sensor-bar">
+              <div class="sensor-bar-fill"></div>
+              <span class="sensor-bar-text">0%</span>
+            </div>
+            <h2 id="sensor-label">Sensor</h2>
           </div>
-          <div id="training-values">
-            <h3>Training Values</h3>
-            <table id="table">
-              <thead>
-                <th>Sensor</th>
-                <th>Motor</th>
-                <th>Delete</th>
-              </thead>
-              <tbody id="table-body"></tbody>
-            </table>
-            <input type="button" value="Add Value" />
-          </div>
+        </div>
+        <div class="training-values">
+          <div class="dividing-line"></div>
+          <h2>Training Values</h2>
+          <table id="table">
+            <thead>
+              <th><h3>Sensor</h3></th>
+              <th><h3>Motor</h3></th>
+              <th><h3>Delete</h3></th>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
         </div>
       </div>
     </div>
+    <! -- play page -->
     <div id="play-page" class="page">
-      <div id="training-values">
+      <div class="training-values">
         <h3>Training Values</h3>
         <table id="table">
           <thead>
             <th>Sensor</th>
             <th>Motor</th>
-            <th>Delete</th>
           </thead>
           <tbody id="table-body"></tbody>
         </table>
@@ -320,6 +410,50 @@
         }
       }
       changePage("explore");
+
+      //change size of canvas
+      window.onresize = function () {
+        resizeCanvas();
+      };
+      function resizeCanvas() {
+        canvas = document.getElementById("canvas-graph");
+        if (window.innerWidth < 1000) {
+          canvas.width = "350";
+          canvas.height = "250";
+        } else {
+          canvas.width = "450";
+          canvas.height = "350";
+        }
+      }
+
+      //change the dichotomy labels based on the selected sensor
+      function sensorSelect() {
+        const sensorName = document.getElementById("sensor-selector").value;
+        const lowLabel = document.getElementById("sensor-low");
+        const highLabel = document.getElementById("sensor-high");
+        if (sensorName == "light") {
+          lowLabel.innerHTML = "Dark";
+          highLabel.innerHTML = "Light";
+        } else if (sensorName == "distance") {
+          lowLabel.innerHTML = "Close";
+          highLabel.innerHTML = "Far";
+        } else if (sensorName == "dial") {
+          lowLabel.innerHTML = "0";
+          highLabel.innerHTML = "360";
+        }
+      }
+
+      //called when the user moves the motor slider
+      function moveMotor(slider) {
+        //get the slider value
+        const value = slider.value;
+
+        //update the gauge position
+        const gauge = document.querySelector(".gauge-fill");
+        gauge.style.transform = `rotate(${value / 360}turn)`;
+
+        //send the new value to the motor
+      }
     </script>
   </body>
 </html>
