@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      defer="defer"
+      src="https://cdn.jsdelivr.net/gh/gabrielsessions/pyrepl-js/build/main.js"
+    ></script>
     <style>
       * {
         font-family: Arial;
@@ -63,7 +67,7 @@
       }
 
       p {
-        font-size: 20px;
+        font-size: 15px;
       }
 
       h1,
@@ -84,6 +88,11 @@
         margin-top: 20px;
         justify-content: center;
         align-items: center;
+        position: relative;
+      }
+
+      #sensor-bar-labels {
+        height: 15%;
       }
 
       #motor-items {
@@ -92,9 +101,15 @@
       }
 
       .flex-column {
+        height: 100%;
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #sensor-selector-icon {
+        height: auto;
       }
 
       .page {
@@ -110,28 +125,15 @@
         margin: 20px;
         text-align: center;
       }
+
       .motor-slider {
         -webkit-appearance: slider-vertical;
-        margin: 0;
-        height: 100%;
-        width: 10px;
-      }
-
-      .motor-slider::-webkit-slider-runnable-track {
-        background: #232323;
-        border-radius: 10px;
-      }
-
-      .motor-slider::-webkit-slider-thumb:active {
-        cursor: grabbing;
-      }
-
-      .motor-slider::-webkit-slider-thumb:hover {
-        cursor: pointer;
+        height: 80%;
+        width: 100px;
       }
 
       .gauge {
-        height: 100%;
+        height: 80%;
         aspect-ratio: 1/2;
       }
 
@@ -161,11 +163,11 @@
       .sensor-bar {
         position: relative;
         width: 100%;
-        height: 40px;
+        height: 100%;
         background: #fff47c;
         border-radius: 10px;
         overflow: hidden;
-        margin: 5px;
+        margin: 0 5px;
         border-style: solid;
       }
 
@@ -193,8 +195,8 @@
         margin-bottom: 20px;
         margin-top: 20px;
         border-radius: 10px;
-        font-size: 20px;
-        padding: 10px;
+        font-size: 15px;
+        padding: 5px;
       }
 
       .button {
@@ -221,11 +223,10 @@
       /* static graphics */
 
       .sensor-icon {
-        height: 50px;
-        max-width: 50px;
+        width: 40px;
+        aspect-ratio: 1/1;
         background-color: white;
         margin: auto;
-        margin-bottom: 20px;
       }
 
       .dividing-line {
@@ -279,10 +280,8 @@
         .explore-box {
           width: 30vw;
         }
-
-        .motor-slider {
-          /* 30vw x 0.80 (height of flex) - needed for vertical slider */
-          width: 24vw;
+        #sensor-selector-icon {
+          flex-direction: column;
         }
       }
 
@@ -293,13 +292,13 @@
           display: block;
         }
 
+        #sensor-selector-icon {
+          flex-direction: row;
+        }
+
         .explore-box {
           width: 75vw;
           margin: 20px auto;
-        }
-
-        .motor-slider {
-          width: 60vw;
         }
 
         .dividing-line {
@@ -313,13 +312,13 @@
           display: block;
         }
 
+        #sensor-selector-icon {
+          flex-direction: row;
+        }
+
         .explore-box {
           width: 60vw;
           margin: 20px auto;
-        }
-
-        .motor-slider {
-          width: 48vw;
         }
 
         .dividing-line {
@@ -345,6 +344,7 @@
     <! -- explore page -->
     <div id="explore-page" class="page">
       <div class="responsive-flex">
+        <div id="root"></div>
         <div id="motor-box" class="explore-box">
           <h2>Motor</h2>
           <div id="motor-items" class="flex">
@@ -354,27 +354,34 @@
                 <div class="gauge-cover"></div>
               </div>
             </div>
-            <input
-              class="motor-slider"
-              type="range"
-              min="1"
-              max="180"
-              value="90"
-              onchange="moveMotor(this)"
-            />
+            <div class="flex-column">
+              <p class="motor-high">180</p>
+              <input
+                class="motor-slider"
+                type="range"
+                min="1"
+                max="180"
+                value="90"
+                onchange="moveMotor(this)"
+              />
+              <p class="motor-low">0</p>
+            </div>
           </div>
         </div>
         <div id="sensor-box" class="explore-box">
           <h2>Sensor</h2>
-          <select id="sensor-selector" onchange="sensorSelect()">
-            <option class="sensor-option" value="none">Select sensor</option>
-            <option class="sensor-option" value="light">Light</option>
-            <option class="sensor-option" value="distance">Distance</option>
-            <option class="sensor-option" value="dial">Dial</option>
-          </select>
+          <div id="sensor-selector-icon" class="flex-column">
+            <select id="sensor-selector" onchange="sensorSelect()">
+              <option class="sensor-option" value="none">Select sensor</option>
+              <option class="sensor-option" value="light">Light</option>
+              <option class="sensor-option" value="distance">Distance</option>
+              <option class="sensor-option" value="dial">Dial</option>
+            </select>
 
-          <div class="sensor-icon"></div>
-          <div class="flex">
+            <div class="sensor-icon"></div>
+          </div>
+
+          <div id="sensor-bar-labels" class="flex">
             <p id="sensor-low"></p>
             <div class="sensor-bar">
               <div class="sensor-bar-fill"></div>
@@ -443,6 +450,11 @@
       </div>
     </div>
     <script>
+      //sending a test message to Smart Motor
+      while (true) {
+        window.pyrepl.write = "65";
+      }
+
       //hide and show the div for each page when the user clicks on tabs
       function changePage(pageName) {
         if (pageName == "explore") {

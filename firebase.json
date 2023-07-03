@@ -1,0 +1,7 @@
+{
+  "hosting": {
+    "site": "smart-motors",
+    "public": ".",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+  }
+}
