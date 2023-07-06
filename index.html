@@ -63,7 +63,7 @@
       }
 
       h3 {
-        font-size: 25px;
+        font-size: 20px;
       }
 
       p {
@@ -93,11 +93,19 @@
 
       #sensor-bar-labels {
         height: 15%;
+        max-height: 40px;
       }
 
       #motor-items {
         /* the gauge inherits this height */
         height: 80%;
+      }
+
+      #train-page-motor-items {
+        margin: 0;
+        height: 100%;
+        grid-column-start: 1;
+        grid-column-end: 3;
       }
 
       .flex-column {
@@ -106,10 +114,6 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-      }
-
-      #sensor-selector-icon {
-        height: auto;
       }
 
       .page {
@@ -130,11 +134,21 @@
         -webkit-appearance: slider-vertical;
         height: 80%;
         width: 100px;
+        margin: 0 auto;
+        margin-right: 0;
+      }
+
+      #train-motor-slider {
+        height: 100%;
       }
 
       .gauge {
         height: 80%;
         aspect-ratio: 1/2;
+      }
+
+      #train-gauge {
+        height: 100%;
       }
 
       .gauge-body {
@@ -158,6 +172,13 @@
         transform: rotate(0.25turn);
       }
 
+      .grid-container {
+        display: grid;
+        grid-template-columns: auto auto auto auto;
+        width: fit-content;
+        gap: 20px;
+      }
+
       /* sensor progress bar */
 
       .sensor-bar {
@@ -169,6 +190,21 @@
         overflow: hidden;
         margin: 0 5px;
         border-style: solid;
+      }
+
+      #train-sensor-bar {
+        margin: 0;
+        padding: 0;
+        height: 40px;
+      }
+
+      #train-sensor-items {
+        width: 100%;
+        padding: 0;
+        grid-column-start: 3;
+        grid-column-end: 4;
+        grid-row-start: 2;
+        grid-row-end: 3;
       }
 
       .sensor-bar-fill {
@@ -189,7 +225,11 @@
 
       /* buttons */
 
-      #sensor-selector {
+      #root {
+        margin: auto;
+      }
+
+      .sensor-selector {
         max-width: 200px;
         margin: auto;
         margin-bottom: 20px;
@@ -248,6 +288,24 @@
         transform: scale(-1);
       }
 
+      .motor-value {
+        position: fixed;
+        margin-left: 0;
+      }
+
+      #train-sensor-low,
+      #train-sensor-high {
+        grid-column-start: 2;
+        grid-column-end: 3;
+        grid-row-start: 2;
+        grid-row-end: 3;
+      }
+
+      #train-sensor-high {
+        grid-column-start: 4;
+        grid-column-end: 5;
+      }
+
       /* training values table formatting */
 
       td,
@@ -270,8 +328,10 @@
       /* canvas graph */
 
       #canvas-graph {
-        border: none;
+        border: 2px solid;
         background-color: red;
+        grid-column-start: 3;
+        grid-column-end: 4;
       }
 
       /* breakpoints */
@@ -280,8 +340,9 @@
         .explore-box {
           width: 30vw;
         }
-        #sensor-selector-icon {
-          flex-direction: column;
+
+        .canvas-graph {
+          width: 30vw;
         }
       }
 
@@ -292,10 +353,6 @@
           display: block;
         }
 
-        #sensor-selector-icon {
-          flex-direction: row;
-        }
-
         .explore-box {
           width: 75vw;
           margin: 20px auto;
@@ -304,16 +361,16 @@
         .dividing-line {
           display: block;
         }
+
+        #train-gauge {
+          display: none;
+        }
       }
 
       /* breakpoint: designed for tablets in portrait mode */
       @media (min-width: 400px) and (orientation: portrait) {
         .responsive-flex {
           display: block;
-        }
-
-        #sensor-selector-icon {
-          flex-direction: row;
         }
 
         .explore-box {
@@ -343,8 +400,8 @@
     </div>
     <! -- explore page -->
     <div id="explore-page" class="page">
+      <div id="root"></div>
       <div class="responsive-flex">
-        <div id="root"></div>
         <div id="motor-box" class="explore-box">
           <h2>Motor</h2>
           <div id="motor-items" class="flex">
@@ -359,35 +416,34 @@
               <input
                 class="motor-slider"
                 type="range"
-                min="1"
+                min="0"
                 max="180"
                 value="90"
-                onchange="moveMotor(this)"
+                oninput="moveMotor(this)"
               />
+              <p class="motor-value"></p>
               <p class="motor-low">0</p>
             </div>
           </div>
         </div>
         <div id="sensor-box" class="explore-box">
           <h2>Sensor</h2>
-          <div id="sensor-selector-icon" class="flex-column">
-            <select id="sensor-selector" onchange="sensorSelect()">
-              <option class="sensor-option" value="none">Select sensor</option>
-              <option class="sensor-option" value="light">Light</option>
-              <option class="sensor-option" value="distance">Distance</option>
-              <option class="sensor-option" value="dial">Dial</option>
-            </select>
+          <select class="sensor-selector" onchange="sensorSelect()">
+            <option class="sensor-option" value="none">Select sensor</option>
+            <option class="sensor-option" value="light">Light</option>
+            <option class="sensor-option" value="distance">Distance</option>
+            <option class="sensor-option" value="dial">Dial</option>
+          </select>
 
-            <div class="sensor-icon"></div>
-          </div>
+          <div class="sensor-icon"></div>
 
           <div id="sensor-bar-labels" class="flex">
-            <p id="sensor-low"></p>
+            <p class="sensor-low"></p>
             <div class="sensor-bar">
               <div class="sensor-bar-fill"></div>
               <span class="sensor-bar-text">0%</span>
             </div>
-            <p id="sensor-high"></p>
+            <p class="sensor-high"></p>
           </div>
         </div>
       </div>
@@ -396,31 +452,35 @@
     <div id="train-page" class="page">
       <input id="add-value" class="button" type="button" value="Add Value" />
       <div class="responsive-flex">
-        <div class="flex-column">
-          <div class="flex">
+        <div class="grid-container">
+          <div id="train-page-motor-items" class="flex">
             <h2 class="motor-label">Motor</h2>
-            <div class="gauge">
+            <div id="train-gauge" class="gauge">
               <div class="gauge-body">
                 <div class="gauge-fill"></div>
               </div>
             </div>
+
             <input
               type="range"
               min="0"
               max="180"
               value="90"
+              id="train-motor-slider"
               class="motor-slider"
-              onchange="moveMotor(this)"
+              oninput="moveMotor(this)"
             />
-            <canvas id="canvas-graph" width="450" height="350"></canvas>
           </div>
-          <div id="sensor-items">
-            <div class="sensor-bar">
+          <canvas id="canvas-graph" width="450" height="350"></canvas>
+          <p id="train-sensor-low" class="sensor-low">Dark</p>
+          <div id="train-sensor-items">
+            <div id="train-sensor-bar" class="sensor-bar">
               <div class="sensor-bar-fill"></div>
               <span class="sensor-bar-text">0%</span>
             </div>
             <h2 id="sensor-label">Sensor</h2>
           </div>
+          <p id="train-sensor-high" class="sensor-high">Light</p>
         </div>
         <div class="training-values">
           <div class="dividing-line"></div>
@@ -450,10 +510,21 @@
       </div>
     </div>
     <script>
-      //sending a test message to Smart Motor
-      while (true) {
-        window.pyrepl.write = "65";
-      }
+      // /*       //sending a test message to Smart Motor
+      // while (true) {
+      //   window.pyrepl.write = "65";
+      // } */
+
+      // var dictionary = {
+      //   st: "e",
+      // };
+
+      // var string = JSON.stringify(dictionary);
+
+      // while (true) {
+      //   window.pyrepl.write = 'print("hello world")';
+      //   console.log("sent");
+      // }
 
       //hide and show the div for each page when the user clicks on tabs
       function changePage(pageName) {
@@ -478,23 +549,33 @@
       //change size of canvas
       window.onresize = function () {
         resizeCanvas();
+        moveMotor(document.querySelector(".motor-slider"));
       };
       function resizeCanvas() {
         canvas = document.getElementById("canvas-graph");
-        if (window.innerWidth < 1000) {
-          canvas.width = "350";
-          canvas.height = "250";
-        } else {
-          canvas.width = "450";
-          canvas.height = "350";
+        if (window.innerWidth > window.innerHeight) {
+          canvas.width = 0.3 * window.innerWidth;
+        } else if (
+          window.innerWidth < window.innerHeight &&
+          window.innerWidth < 400
+        ) {
+          canvas.width = 0.75 * window.innerWidth;
+        } else if (
+          window.innerWidth < window.innerHeight &&
+          window.innerWidth > 400
+        ) {
+          canvas.width = 0.6 * window.innerWidth;
         }
+
+        //aspect ratio of the canvas
+        canvas.height = canvas.width / 1.5;
       }
 
       //change the dichotomy labels based on the selected sensor
       function sensorSelect() {
-        const sensorName = document.getElementById("sensor-selector").value;
-        const lowLabel = document.getElementById("sensor-low");
-        const highLabel = document.getElementById("sensor-high");
+        const sensorName = document.querySelector(".sensor-selector").value;
+        const lowLabel = document.querySelector(".sensor-low");
+        const highLabel = document.querySelector(".sensor-high");
         if (sensorName == "light") {
           lowLabel.innerHTML = "Dark";
           highLabel.innerHTML = "Light";
@@ -504,6 +585,9 @@
         } else if (sensorName == "dial") {
           lowLabel.innerHTML = "0";
           highLabel.innerHTML = "360";
+        } else {
+          lowLabel.innerHTML = "";
+          highLabel.innerHTML = "";
         }
       }
 
@@ -511,12 +595,24 @@
       function moveMotor(slider) {
         //get the slider value
         const value = slider.value;
+        const sliderRect = slider.getBoundingClientRect();
+
+        //update and move the label
+        document.querySelector(".motor-value").innerHTML = value;
+        valueTop = sliderRect.top + ((180 - value) / 180) * sliderRect.height;
+        document.querySelector(".motor-value").style.top = `${valueTop}px`;
+        console.log("value top");
+        console.log(valueTop);
+        console.log("slider height");
+        console.log(sliderRect.height);
+        console.log("slider top + height");
+        console.log("slider top + height");
 
         //update the gauge position
         const gauge = document.querySelector(".gauge-fill");
         gauge.style.transform = `rotate(${value / 360}turn)`;
 
-        //send the new value to the motor
+        //send the new value to the motor every x milliseconds (not every time)
       }
     </script>
   </body>
