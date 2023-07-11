@@ -221,7 +221,6 @@
         top: 50%;
         right: 5px;
         transform: translateY(-50%);
-        font: bold 16px "Quicksand", sans-serif;
         color: #000000;
       }
 
@@ -352,18 +351,22 @@
 
       td,
       th {
-        padding: 20px;
+        padding: 10px;
       }
 
-      td {
+      tr {
         border: 4px solid black;
       }
 
       table {
-        background: black;
-        color: white;
         margin: 20px auto;
         border-collapse: collapse;
+        border-radius: 20px;
+      }
+
+      th {
+        background: black;
+        color: white;
       }
 
       /* canvas graph */
@@ -427,15 +430,7 @@
     </style>
   </head>
 
-  <body onload="setup();">
-    <p><button onclick="window.pyrepl.reboot;">Reboot</button></p>
-    <p>
-      <input type="text" id="val" /><button
-        onclick="testmotor(document.getElementById('val').value)"
-      >
-        Test Motor
-      </button>
-    </p>
+  <body onload="setupSerial();">
     <! -- tabs -->
     <div class="tab-container">
       <button id="explore-tab" class="tab-link" onclick="changePage('explore')">
@@ -469,7 +464,7 @@
                 min="0"
                 max="180"
                 value="90"
-                oninput="moveSlider(this)"
+                oninput="moveMotor(this.value)"
               />
               <p class="motor-value"></p>
               <p class="motor-low">0</p>
@@ -491,7 +486,7 @@
             <p class="sensor-low"></p>
             <div class="sensor-bar">
               <div class="sensor-bar-fill"></div>
-              <span class="sensor-bar-text">0%</span>
+              <span class="sensor-bar-text"><p>0%</p></span>
             </div>
             <p class="sensor-high"></p>
           </div>
@@ -523,7 +518,7 @@
             value="90"
             id="train-motor-slider"
             class="motor-slider"
-            oninput="moveSlider(this)"
+            oninput="moveMotor(this.value)"
           />
           <p id="train-motor-low" class="motor-low">0</p>
           <canvas
@@ -543,16 +538,13 @@
         <div class="training-values">
           <div class="dividing-line"></div>
           <h2>Training Values</h2>
-          <table id="table">
+          <table>
             <thead>
               <th><h3>Sensor</h3></th>
               <th><h3>Motor</h3></th>
               <th><h3>Delete</h3></th>
-              <tr>
-                <td><button id="delete" class="button">x</button></td>
-              </tr>
             </thead>
-            <tbody id="table-body"></tbody>
+            <tbody id="train-table"></tbody>
           </table>
         </div>
       </div>
@@ -564,7 +556,7 @@
         class="button"
         type="button"
         value="Start"
-        onclick="startPlay()"
+        onclick="startStop()"
       />
       <div class="responsive-flex">
         <div class="grid-container">
@@ -594,90 +586,121 @@
         <div class="training-values">
           <div class="dividing-line"></div>
           <h2>Training Values</h2>
-          <table id="table">
+          <table>
             <thead>
               <th><h3>Sensor</h3></th>
               <th><h3>Motor</h3></th>
-              <th><h3>Delete</h3></th>
             </thead>
-            <tbody id="table-body"></tbody>
+            <tbody id="play-table"></tbody>
           </table>
         </div>
       </div>
     </div>
     <script>
-      var sensor_array = [];
-      var motor_array = [];
-      let state;
+      var sensorArray = [];
+      var motorArray = [];
+      let status;
+      var hoverDelete = -1;
+
+      // function hoverDelete() {
+      //   console.log("HOVER DELETE");
+      //   // if (mouseover) {
+      //   //   var i = button.parentNode.parentNode.rowIndex;
+      //   //   hoverDelete = i;
+      //   // } else {
+      //   //   hoverDelete = -1;
+      //   // }
+      // }
 
       class Graph {
         constructor(c) {
           // Constructor
           this.canvas = c;
           this.ctx = this.canvas.getContext("2d");
-          this.last_sensor_val = 50;
-          this.last_motor_val = 90;
+          this.lastSensorVal = 50;
+          this.lastMotorVal = 90;
           this.redraw(-1);
         }
 
-        update_sensor_val(sval) {
-          this.last_sensor_val = sval;
+        updateSensorVal(sval) {
+          this.lastSensorVal = sval;
         }
 
-        update_motor_val(mval) {
-          this.last_motor_val = mval;
+        updateMotorVal(mval) {
+          this.lastMotorVal = mval;
         }
 
-        redraw(NN_index) {
+        redraw(NNi) {
           //console.log("Update graph");
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          this.draw_sensorline(this.last_sensor_val);
-          this.draw_motorline(this.last_motor_val);
-          for (var i = 0; i < sensor_array.length; i++) {
-            this.draw_point(sensor_array[i], motor_array[i]);
+          this.drawSensorLine(this.lastSensorVal);
+          this.drawMotorLine(this.lastMotorVal);
+          for (var i = 0; i < sensorArray.length; i++) {
+            this.drawPoint(sensorArray[i], motorArray[i]);
           }
-          if (NN_index != -1) {
-            this.highlight_NN(NN_index);
+          if (NNi != -1) {
+            this.highlightNN(NNi);
+          }
+          if (hoverDelete != -1) {
+            this.highlightDelete(hoverDelete);
           }
         }
 
-        convert_x(x) {
+        highlightDelete(i) {
+          var mval = motorArray[i];
+          var sval = sensorArray[i];
+
+          //highlight that point
+          this.ctx.beginPath();
+          this.ctx.arc(
+            this.convertX(sval),
+            this.convertY(mval),
+            10, //radius
+            0,
+            2 * Math.PI
+          );
+
+          this.ctx.strokeStyle = "#FF5151";
+          this.ctx.stroke();
+        }
+
+        convertX(x) {
           // Assume the svals are 0-100 convert to a scale - start to bw-start
           const cx = this.canvas.width * (x / 100);
           return cx;
         }
 
-        convert_y(y) {
+        convertY(y) {
           // Assume the svals are 0-100 convert to a scale - start to bh-start
           const cy = (this.canvas.height * (180 - y)) / 180;
           return cy;
         }
 
-        draw_sensorline(sval) {
+        drawSensorLine(sval) {
           this.ctx.beginPath();
           this.ctx.lineWidth = 4;
           this.ctx.strokeStyle = "#FFD65C";
-          this.ctx.moveTo(this.convert_x(sval), this.convert_y(0));
-          this.ctx.lineTo(this.convert_x(sval), this.convert_y(180));
+          this.ctx.moveTo(this.convertX(sval), this.convertY(0));
+          this.ctx.lineTo(this.convertX(sval), this.convertY(180));
           this.ctx.stroke();
         }
 
-        draw_motorline(mval) {
+        drawMotorLine(mval) {
           this.ctx.beginPath();
           this.ctx.lineWidth = 4;
           this.ctx.strokeStyle = "#06A5FF";
-          this.ctx.moveTo(this.convert_x(0), this.convert_y(mval));
-          this.ctx.lineTo(this.convert_x(100), this.convert_y(mval));
+          this.ctx.moveTo(this.convertX(0), this.convertY(mval));
+          this.ctx.lineTo(this.convertX(100), this.convertY(mval));
           this.ctx.stroke();
         }
 
-        draw_point(sval, mval) {
+        drawPoint(sval, mval) {
           //Assume the mvals are 0-180 convert to a scale - start+bh to star
           this.ctx.beginPath();
           this.ctx.fillStyle = "#232323";
           this.ctx.arc(
-            this.convert_x(sval),
-            this.convert_y(mval),
+            this.convertX(sval),
+            this.convertY(mval),
             5,
             0,
             2 * Math.PI
@@ -686,26 +709,22 @@
           this.ctx.fill();
         }
 
-        highlight_NN(i) {
+        highlightNN(i) {
           //find sval
-          var mval = motor_array[i];
-          var sval = sensor_array[i];
-
-          console.log(motor_array);
-          console.log(sensor_array);
-          console.log(i);
+          var mval = motorArray[i];
+          var sval = sensorArray[i];
 
           //highlight that point
           this.ctx.beginPath();
           this.ctx.arc(
-            this.convert_x(sval),
-            this.convert_y(mval),
+            this.convertX(sval),
+            this.convertY(mval),
             10, //radius
             0,
             2 * Math.PI
           );
 
-          this.ctx.strokeStyle = "#FF5151";
+          this.ctx.strokeStyle = "#232323";
           this.ctx.stroke();
         }
       }
@@ -720,11 +739,6 @@
       trainGraph.redraw(-1);
       playGraph.redraw(-1);
 
-      /*       //sending a test message to Smart Motor
-      while (true) {
-        window.pyrepl.write = "65";
-      } */
-
       //hide and show the div for each page when the user clicks on tabs
       function changePage(pageName) {
         if (pageName == "explore") {
@@ -736,7 +750,7 @@
           document.getElementById("play-tab").style.backgroundColor = "";
           document.getElementById("explore-tab").style.backgroundColor =
             "#06A5FF";
-          state = "e";
+          status = "e";
         }
         if (pageName == "train") {
           document.getElementById("explore-page").style.display = "none";
@@ -747,7 +761,7 @@
           document.getElementById("play-tab").style.backgroundColor = "";
           document.getElementById("train-tab").style.backgroundColor =
             "#C387FF";
-          state = "t";
+          status = "t";
         }
         if (pageName == "play") {
           document.getElementById("explore-page").style.display = "none";
@@ -757,7 +771,7 @@
           document.getElementById("explore-tab").style.backgroundColor = "";
           document.getElementById("train-tab").style.backgroundColor = "";
           document.getElementById("play-tab").style.backgroundColor = "#3ADB5E";
-          state = "p";
+          status = "p";
         }
       }
 
@@ -790,10 +804,8 @@
 
       //change the dichotomy labels based on the selected sensor
       function selectSensor() {
-        console.log("select sensor");
         const sensorName = document.querySelector(".sensor-selector").value;
         const lowLabels = document.querySelectorAll(".sensor-low");
-        console.log(lowLabels);
         const highLabels = document.querySelectorAll(".sensor-high");
         if (sensorName == "light") {
           lowLabels.forEach((element) => (element.innerHTML = "Dark"));
@@ -811,23 +823,20 @@
       }
 
       //called when the user moves the motor slider
-      function moveSlider(slider) {
-        //get the slider value
-        const val = slider.value;
-
+      function moveMotor(val) {
         //update both sliders with this value
         const sliders = document.querySelectorAll(".motor-slider");
         sliders.forEach((element) => (element.value = val));
 
         //update and move the label
-        const sliderRect = slider.getBoundingClientRect();
-        motorValues = document.querySelectorAll(".motor-value");
-        for (var i = 0; i < motorValues.length; i++) {
-          label = motorValues[i];
-          label.innerHTML = val;
-          valueTop = sliderRect.top + ((180 - val) / 180) * sliderRect.height;
-          label.style.top = `${valueTop}px`;
-        }
+        // const sliderRect = slider.getBoundingClientRect();
+        // motorValues = document.querySelectorAll(".motor-value");
+        // for (var i = 0; i < motorValues.length; i++) {
+        //   label = motorValues[i];
+        //   label.innerHTML = val;
+        //   valueTop = sliderRect.top + ((180 - val) / 180) * sliderRect.height;
+        //   label.style.top = `${valueTop}px`;
+        // }
 
         //update the gauge position
         const gauges = document.querySelectorAll(".gauge-fill");
@@ -836,35 +845,14 @@
         );
 
         //update the graph position
-        trainGraph.update_motor_val(val);
-        playGraph.update_motor_val(val);
+        trainGraph.updateMotorVal(val);
+        playGraph.updateMotorVal(val);
 
         trainGraph.redraw(-1);
         playGraph.redraw(-1);
       }
 
-      //called when the user releases the motor slider
-      // function moveMotor(slider) {
-      //   const value = slider.value;
-
-      //   if (window.pyrepl && window.pyrepl.isActive) {
-      //     var string_value = value.toString();
-      //     //SERIAL send the new value to the motor every x milliseconds (not every time)
-      //     console.log("START");
-      //     var dictionary = {
-      //       st: "e",
-      //       m: string_value,
-      //       s: "",
-      //     };
-      //     window.pyrepl.write = "{}";
-      //     window.pyrepl.write = JSON.stringify(dictionary);
-      //     console.log("MOVE MOTOR");
-      //   }
-      // }
-
       function updateSensor(value) {
-        console.log("in update sensor");
-        console.log(value);
         const sensorBarFills = document.querySelectorAll(".sensor-bar-fill");
         const sensorBarLabels = document.querySelectorAll(".sensor-bar-text");
         //update the progress bar
@@ -876,110 +864,192 @@
         );
       }
 
-      function startPlay() {}
-
       function addValue() {
-        // sensor_value = trainCanvas.last_motor_val;
-        // motor_value = trainCanvas.last_sensor_val;
-        // sensor_array.push(sensor_value);
-        // motor_array.push(motor_value);
-        // trainGraph.redraw(-1);
-        // playGraph.redraw(-1);
+        motorVal = trainGraph.lastMotorVal;
+        sensorVal = trainGraph.lastSensorVal;
+
+        //add new data point to js arrays
+        motorArray.push(motorVal);
+        sensorArray.push(sensorVal);
+
+        //create cells with data
+        var trainc1 = document.createElement("td");
+        var playc1 = document.createElement("td");
+        var trainc2 = document.createElement("td");
+        var playc2 = document.createElement("td");
+        trainc1.innerText = motorVal;
+        playc1.innerText = motorVal;
+        trainc2.innerText = sensorVal;
+        playc2.innerText = sensorVal;
+
+        //create a delete button for the row
+        var deleteButton = document.createElement("button");
+        deleteButton.setAttribute("id", "delete");
+        deleteButton.setAttribute("class", "button");
+        deleteButton.innerHTML = "x";
+        deleteButton.setAttribute("onclick", "deleteValue(this)");
+        // deleteButton.setAttribute("onmouseover", "hoverDelete(event, this)");
+        // deleteButton.setAttribute("onmouseout", "hoverDelete(event, this)");
+        // deleteButton.addEventListener("mouseover", hoverDelete());
+        // deleteButton.addEventListener("mouseout", hoverDelete());
+
+        //make a cell with the delete button
+        var c3 = document.createElement("td");
+        c3.appendChild(deleteButton);
+
+        //append the cells to the row and the row to the table
+        var deletableRow = document.createElement("tr");
+        deletableRow.appendChild(trainc1);
+        deletableRow.appendChild(trainc2);
+        deletableRow.appendChild(c3);
+        document.querySelector("#train-table").appendChild(deletableRow);
+
+        var row = document.createElement("tr");
+        row.appendChild(playc1);
+        row.appendChild(playc2);
+
+        document.querySelector("#play-table").appendChild(row);
+
+        //redraw the graphs
+        trainGraph.redraw(-1);
+        playGraph.redraw(-1);
+
+        //add new data point to python arrays
+        var dictionary = {};
+        dictionary["st"] = "t";
+        dictionary["t"] = 1;
+        dictionary["am"] = motorVal;
+        dictionary["as"] = sensorVal;
+        window.pyrepl.write = JSON.stringify(dictionary);
       }
 
-      function deleteValue() {}
+      function deleteValue(deleteButton) {
+        //get the row from the delete button
+        var row = deleteButton.parentNode.parentNode.rowIndex;
+        var tables = document.querySelectorAll("table");
+        tables.forEach((table) => table.deleteRow(row));
 
-      function loadData() {}
+        //delete value in arrays
+        sensorArray.splice(i, 1);
+        motorArray.splice(i, 1);
+        trainGraph.redraw(-1);
+        playGraph.redraw(-1);
 
-      function testmotor(distance) {
-        command = "-" + distance + "}";
-        window.pyrepl.write = command;
-        console.log("sent");
-        console.log(command);
+        //subtract 1 to account for the header
+        var i = row - 1;
 
-        //read
-        received = window.pyrepl.read;
-        console.log("received");
-        console.log(received);
-        window.pyrepl.clearConsole;
+        //delete value in python
+
+        //delete data point from python arrays
+        var dictionary = {};
+        dictionary["st"] = "t";
+        dictionary["t"] = 1;
+        dictionary["di"] = i;
+        window.pyrepl.write = JSON.stringify(dictionary);
       }
-      function setup() {
-        if (window.pyrepl && window.pyrepl.isActive) {
-          console.log("DEVICE CONNECTED: about to reboot");
-          window.pyrepl.reboot;
-          setInterval(serial, 250); // connected, start monitoring
+
+      // function loadData() {
+      //   //request the loaded data
+      //   var dictionary = {};
+      //   dictionary["st"] = "l";
+      //   window.pyrepl.write = JSON.stringify(dictionary);
+
+      //   //read in the loaded data
+      //   var received = window.pyrepl.read;
+      //   //get the last line of the serial reading
+      //   var lastReceived = received[received.length - 1];
+      //   var lastJSON = JSON.parse(lastReceived);
+      //   var motorVals = lastReceived.m;
+      //   var sensorVals = lastReceived.s;
+      //   for (var i = 0; i < motorVals.length; i++) {
+      //     addValue(motorVals[i], sensorVals[i]);
+      //   }
+      // }
+
+      function startStop() {
+        const button = document.getElementById("start");
+        if (button.value == "Start") {
+          var dictionary = {};
+          dictionary["st"] = "p";
+          dictionary["r"] = 1;
+          window.pyrepl.write = JSON.stringify(dictionary);
+
+          //change the button text and color
+          button.value = "Stop";
+          button.style.backgroundColor = "#FF5151";
         } else {
-          setTimeout(setup, 250);
+          var dictionary = {};
+          dictionary["st"] = "p";
+          dictionary["r"] = 0;
+          window.pyrepl.write = JSON.stringify(dictionary);
+
+          //change the button text and color
+          button.value = "Start";
+          button.style.backgroundColor = "#3ADB5E";
         }
       }
 
-      function serial() {
-        // monitor function
-        // *SHOULD* be connected, but lets double cehck
+      function setupSerial() {
         if (window.pyrepl && window.pyrepl.isActive) {
-          // var val = document.querySelector(".motor-slider").value;
-          // command = "-" + val + "}";
-          // window.pyrepl.write = command;
-          // console.log("sent");
-          // console.log(command);
+          console.log("DEVICE CONNECTED: about to reboot");
+          window.pyrepl.reboot;
+          //loadData();
+          setInterval(runSerial, 150); // connected, start monitoring
+        } else {
+          setTimeout(setupSerial, 250);
+        }
+      }
 
-          // //read
-          // received = window.pyrepl.read;
-          // //parse
-          // updateSensor(parseInt(received));
-          // console.log("received");
-          // console.log(received);
-          // window.pyrepl.clearConsole;
-
+      function runSerial() {
+        // should already be connected, but lets double cehck
+        if (window.pyrepl && window.pyrepl.isActive) {
           var val = document.querySelector(".motor-slider").value;
 
           var dictionary = {};
           dictionary["m"] = val;
+          dictionary["st"] = status;
           window.pyrepl.write = JSON.stringify(dictionary);
 
-          received = window.pyrepl.read;
-          received = JSON.parse(received);
-          console.log(received.s);
-          window.pyrepl.clearConsole;
+          var received = window.pyrepl.read;
+          //get the last line of the serial reading
+          var lastReceived = received[received.length - 1];
+          var lastJSON = JSON.parse(lastReceived);
+          var sensorVal = Math.round(lastJSON.s);
+
+          //update sensor value on progress bar
+          updateSensor(sensorVal);
+
+          //update sensor value on graph
+          trainGraph.updateSensorVal(sensorVal);
+          playGraph.updateSensorVal(sensorVal);
+
+          //if in play/start mode
+          if (lastJSON.hasOwnProperty("m") && lastJSON.hasOwnProperty("i")) {
+            //go to motor value
+            moveMotor(lastJSON.m);
+            //highlight nearest neighbor
+            playGraph.redraw(lastJSON.i);
+          } else {
+            trainGraph.redraw(-1);
+            playGraph.redraw(-1);
+          }
         }
-
-        //setup();
-
-        // //write
-        // const motor_value = document.querySelector(".motor-slider").value;
-        // var dictionary = {
-        //   st: state,
-        //   m: motor_value,
-        //   s: "",
-        // };
-        // window.pyrepl.write = "-5}";
-        // console.log("sent");
-        // console.log("-5}");
-
-        // //read
-        // received = window.pyrepl.read;
-        // console.log("received");
-        // console.log(received);
-        // window.pyrepl.clearConsole;
-        // console.log("received index");
-        // console.log(received[4]);
-        // if (received[4][0] == "{") {
-        //   received = received[4].replace(/&quot;/gi, '"');
-        //   console.log("received quotes fix");
-
-        //   console.log(received);
-
-        //   received = JSON.parse(received);
-        //   //update sensor value
-        //   updateSensor(received.s);
-        // }
       }
+
+      // function hoverDelete() {
+      //   console.log("HOVER DELETE");
+      //   // if (mouseover) {
+      //   //   var i = button.parentNode.parentNode.rowIndex;
+      //   //   hoverDelete = i;
+      //   // } else {
+      //   //   hoverDelete = -1;
+      //   // }
+      // }
 
       //functions that run on website load
       changePage("explore");
       resizeCanvas();
-
-      //setInterval(serial, 250);
+      // hoverDelete();
     </script>
   </body>
 </html>
