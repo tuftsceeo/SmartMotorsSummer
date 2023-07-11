@@ -86,6 +86,11 @@
 
       /* containers */
 
+      .root-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+
       .flex,
       .responsive-flex {
         display: flex;
@@ -225,10 +230,6 @@
       }
 
       /* buttons */
-
-      #root {
-        margin: auto;
-      }
 
       .sensor-selector {
         max-width: 200px;
@@ -443,9 +444,11 @@
         <h1>Play</h1>
       </button>
     </div>
+    <div class="root-container">
+      <div id="root"></div>
+    </div>
     <! -- explore page -->
     <div id="explore-page" class="page">
-      <div id="root"></div>
       <div class="responsive-flex">
         <div id="motor-box" class="explore-box">
           <h2>Motor</h2>
@@ -500,7 +503,7 @@
         class="button"
         type="button"
         value="Add Value"
-        onclick="addValue()"
+        onclick="addValue(-1, -1)"
       />
       <div class="responsive-flex">
         <div class="grid-container">
@@ -741,6 +744,7 @@
 
       //hide and show the div for each page when the user clicks on tabs
       function changePage(pageName) {
+        resizeCanvas();
         if (pageName == "explore") {
           document.getElementById("explore-page").style.display = "block";
           document.getElementById("train-page").style.display = "none";
@@ -751,6 +755,7 @@
           document.getElementById("explore-tab").style.backgroundColor =
             "#06A5FF";
           status = "e";
+          stop();
         }
         if (pageName == "train") {
           document.getElementById("explore-page").style.display = "none";
@@ -762,6 +767,7 @@
           document.getElementById("train-tab").style.backgroundColor =
             "#C387FF";
           status = "t";
+          stop();
         }
         if (pageName == "play") {
           document.getElementById("explore-page").style.display = "none";
@@ -772,6 +778,7 @@
           document.getElementById("train-tab").style.backgroundColor = "";
           document.getElementById("play-tab").style.backgroundColor = "#3ADB5E";
           status = "p";
+          stop();
         }
       }
 
@@ -779,6 +786,7 @@
       window.onresize = function () {
         resizeCanvas();
       };
+
       function resizeCanvas() {
         const canvases = document.querySelectorAll(".canvas-graph");
         if (window.innerWidth > window.innerHeight) {
@@ -864,9 +872,12 @@
         );
       }
 
-      function addValue() {
-        motorVal = trainGraph.lastMotorVal;
-        sensorVal = trainGraph.lastSensorVal;
+      function addValue(sensorVal, motorVal) {
+        //get the sensor and motor value from the graph if not loading data
+        if (sensorVal == -1 && motorVal == -1) {
+          motorVal = trainGraph.lastMotorVal;
+          sensorVal = trainGraph.lastSensorVal;
+        }
 
         //add new data point to js arrays
         motorArray.push(motorVal);
@@ -877,10 +888,10 @@
         var playc1 = document.createElement("td");
         var trainc2 = document.createElement("td");
         var playc2 = document.createElement("td");
-        trainc1.innerText = motorVal;
-        playc1.innerText = motorVal;
-        trainc2.innerText = sensorVal;
-        playc2.innerText = sensorVal;
+        trainc1.innerText = sensorVal;
+        playc1.innerText = sensorVal;
+        trainc2.innerText = motorVal;
+        playc2.innerText = motorVal;
 
         //create a delete button for the row
         var deleteButton = document.createElement("button");
@@ -915,12 +926,14 @@
         playGraph.redraw(-1);
 
         //add new data point to python arrays
-        var dictionary = {};
-        dictionary["st"] = "t";
-        dictionary["t"] = 1;
-        dictionary["am"] = motorVal;
-        dictionary["as"] = sensorVal;
-        window.pyrepl.write = JSON.stringify(dictionary);
+        if (sensorVal == -1 && motorVal == -1) {
+          var dictionary = {};
+          dictionary["st"] = "t";
+          dictionary["t"] = 1;
+          dictionary["am"] = motorVal;
+          dictionary["as"] = sensorVal;
+          window.pyrepl.write = JSON.stringify(dictionary);
+        }
       }
 
       function deleteValue(deleteButton) {
@@ -928,6 +941,10 @@
         var row = deleteButton.parentNode.parentNode.rowIndex;
         var tables = document.querySelectorAll("table");
         tables.forEach((table) => table.deleteRow(row));
+        console.log("row deleted index");
+        console.log(row);
+
+        var i = row - 1;
 
         //delete value in arrays
         sensorArray.splice(i, 1);
@@ -936,35 +953,46 @@
         playGraph.redraw(-1);
 
         //subtract 1 to account for the header
-        var i = row - 1;
+
+        console.log("delete index");
+        console.log(i);
 
         //delete value in python
 
         //delete data point from python arrays
-        var dictionary = {};
-        dictionary["st"] = "t";
-        dictionary["t"] = 1;
-        dictionary["di"] = i;
-        window.pyrepl.write = JSON.stringify(dictionary);
+        if (sensorVal == -1 && motorVal == -1) {
+          var dictionary = {};
+          dictionary["st"] = "t";
+          dictionary["t"] = 1;
+          dictionary["di"] = i;
+          window.pyrepl.write = JSON.stringify(dictionary);
+        }
       }
 
-      // function loadData() {
-      //   //request the loaded data
-      //   var dictionary = {};
-      //   dictionary["st"] = "l";
-      //   window.pyrepl.write = JSON.stringify(dictionary);
+      function loadData() {
+        console.log("LOAD DATA");
+        //request the loaded data
+        var dictionary = {};
+        dictionary["st"] = "l";
+        window.pyrepl.write = JSON.stringify(dictionary);
 
-      //   //read in the loaded data
-      //   var received = window.pyrepl.read;
-      //   //get the last line of the serial reading
-      //   var lastReceived = received[received.length - 1];
-      //   var lastJSON = JSON.parse(lastReceived);
-      //   var motorVals = lastReceived.m;
-      //   var sensorVals = lastReceived.s;
-      //   for (var i = 0; i < motorVals.length; i++) {
-      //     addValue(motorVals[i], sensorVals[i]);
-      //   }
-      // }
+        //read in the loaded data
+        var received = window.pyrepl.read;
+        var lastReceived = received[received.length - 1];
+        if (lastReceived[0] == "{") {
+          console.log(lastReceived);
+          var lastJSON = JSON.parse(lastReceived);
+          var motorVals = lastJSON.m;
+          console.log(motorVals);
+          var sensorVals = lastJSON.s;
+          console.log(sensorVals);
+          for (var i = 0; i < motorVals.length; i++) {
+            addValue(motorVals[i], sensorVals[i]);
+          }
+        } else {
+          setTimeout(loadData, 250);
+        }
+      }
 
       function startStop() {
         const button = document.getElementById("start");
@@ -978,22 +1006,29 @@
           button.value = "Stop";
           button.style.backgroundColor = "#FF5151";
         } else {
-          var dictionary = {};
-          dictionary["st"] = "p";
-          dictionary["r"] = 0;
-          window.pyrepl.write = JSON.stringify(dictionary);
-
-          //change the button text and color
-          button.value = "Start";
-          button.style.backgroundColor = "#3ADB5E";
+          stop();
         }
+      }
+
+      function stop() {
+        const button = document.getElementById("start");
+        var dictionary = {};
+        dictionary["st"] = status;
+        dictionary["r"] = 0;
+        window.pyrepl.write = JSON.stringify(dictionary);
+
+        //change the button text and color
+        button.value = "Start";
+        button.style.backgroundColor = "#3ADB5E";
       }
 
       function setupSerial() {
         if (window.pyrepl && window.pyrepl.isActive) {
           console.log("DEVICE CONNECTED: about to reboot");
           window.pyrepl.reboot;
-          //loadData();
+          console.log("before load data");
+          loadData();
+          console.log("after load data");
           setInterval(runSerial, 150); // connected, start monitoring
         } else {
           setTimeout(setupSerial, 250);
