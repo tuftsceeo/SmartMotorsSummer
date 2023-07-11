@@ -877,6 +877,14 @@
         if (sensorVal == -1 && motorVal == -1) {
           motorVal = trainGraph.lastMotorVal;
           sensorVal = trainGraph.lastSensorVal;
+          //add new data point to the python arrays
+          var dictionary = {};
+          dictionary["st"] = "t";
+          dictionary["t"] = 1;
+          dictionary["am"] = motorVal;
+          dictionary["as"] = sensorVal;
+          window.pyrepl.write = JSON.stringify(dictionary);
+          console.log("ADD VALUE JSON");
         }
 
         //add new data point to js arrays
@@ -924,16 +932,6 @@
         //redraw the graphs
         trainGraph.redraw(-1);
         playGraph.redraw(-1);
-
-        //add new data point to python arrays
-        if (sensorVal == -1 && motorVal == -1) {
-          var dictionary = {};
-          dictionary["st"] = "t";
-          dictionary["t"] = 1;
-          dictionary["am"] = motorVal;
-          dictionary["as"] = sensorVal;
-          window.pyrepl.write = JSON.stringify(dictionary);
-        }
       }
 
       function deleteValue(deleteButton) {
@@ -987,7 +985,7 @@
           var sensorVals = lastJSON.s;
           console.log(sensorVals);
           for (var i = 0; i < motorVals.length; i++) {
-            addValue(motorVals[i], sensorVals[i]);
+            addValue(sensorVals[i], motorVals[i]);
           }
         } else {
           setTimeout(loadData, 250);
