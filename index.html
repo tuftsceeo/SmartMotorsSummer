@@ -25,6 +25,7 @@
         display: flex;
         margin-bottom: 20px;
       }
+
       .tab-link {
         background-color: #555;
         color: white;
@@ -34,8 +35,14 @@
         height: 100px;
         width: 100%;
       }
+
       .tab-link:hover {
         background-color: #777;
+      }
+
+      .tab-label {
+        display: inline;
+        margin: auto;
       }
 
       /* motor and sensor square boxes on the explore page */
@@ -287,6 +294,15 @@
         margin: auto;
       }
 
+      .tab-icon {
+        display: inline;
+        width: 15%;
+        max-width: 50px;
+        aspect-ratio: 1/1;
+        margin: auto;
+        margin-left: 15px;
+      }
+
       .dividing-line {
         height: 4px;
         border-radius: 1px;
@@ -446,13 +462,16 @@
     <! -- tabs -->
     <div class="tab-container">
       <button id="explore-tab" class="tab-link" onclick="changePage('explore')">
-        <h1>Explore</h1>
+        <h1 class="tab-label">Explore</h1>
+        <img class="tab-icon" src="explore_icon.png" />
       </button>
       <button id="train-tab" class="tab-link" onclick="changePage('train')">
-        <h1>Train</h1>
+        <h1 class="tab-label">Train</h1>
+        <img class="tab-icon" src="train_icon.png" />
       </button>
       <button id="play-tab" class="tab-link" onclick="changePage('play')">
-        <h1>Play</h1>
+        <h1 class="tab-label">Play</h1>
+        <img class="tab-icon" src="play_icon.png" />
       </button>
     </div>
     <div class="root-container">
@@ -492,6 +511,7 @@
             <option class="sensor-option" value="light">Light</option>
             <option class="sensor-option" value="distance">Distance</option>
             <option class="sensor-option" value="dial">Dial</option>
+            <option class="sensor-option" value="slider">Slider</option>
           </select>
 
           <img class="sensor-icon" />
@@ -758,7 +778,7 @@
       //hide and show the div for each page when the user clicks on tabs
       function changePage(pageName) {
         resizeCanvas();
-        updateMotorValLabel();
+        //updateMotorValLabel();
         console.log("change page");
         if (pageName == "explore") {
           document.getElementById("explore-page").style.display = "block";
@@ -800,7 +820,7 @@
       //change size of canvas
       window.onresize = function () {
         resizeCanvas();
-        updateMotorValLabel();
+        //updateMotorValLabel();
       };
 
       function resizeCanvas() {
@@ -844,6 +864,10 @@
           lowLabels.forEach((element) => (element.innerHTML = "Left"));
           highLabels.forEach((element) => (element.innerHTML = "Right"));
           icon.setAttribute("src", "dial_icon.png");
+        } else if (sensorName == "slider") {
+          lowLabels.forEach((element) => (element.innerHTML = "Left"));
+          highLabels.forEach((element) => (element.innerHTML = "Right"));
+          icon.setAttribute("src", "slider_icon.png");
         } else {
           lowLabels.forEach((element) => (element.innerHTML = ""));
           highLabels.forEach((element) => (element.innerHTML = ""));
@@ -863,7 +887,7 @@
           (element) => (element.style.transform = `rotate(${val / 360}turn)`)
         );
 
-        updateMotorValLabel();
+        //updateMotorValLabel();
 
         //update the graph position
         trainGraph.updateMotorVal(val);
@@ -873,36 +897,36 @@
         playGraph.redraw(-1);
       }
 
-      function updateMotorValLabel() {
-        console.log("UPDATE MOTOR VAL LABEL");
-        //get the latest value
-        const val = document.querySelector(".motor-slider").value;
+      // function updateMotorValLabel() {
+      //   console.log("UPDATE MOTOR VAL LABEL");
+      //   //get the latest value
+      //   const val = document.querySelector(".motor-slider").value;
 
-        //update and move the label
-        const gauges = document.querySelectorAll(".gauge");
-        motorValues = document.querySelectorAll(".motor-value");
-        for (var i = 0; i < motorValues.length; i++) {
-          console.log(i);
-          //update the text
-          label = motorValues[i];
-          gaugeRect = gauges[i].getBoundingClientRect();
-          labelRect = label.getBoundingClientRect();
-          label.innerHTML = val;
-          //update the position relative to the gauge
-          var valueBottom = (val / 180) * (gaugeRect.height - 16);
-          console.log(valueBottom);
-          //account for height of text
-          valueBottom = valueBottom - labelRect.height / 2 + 8;
-          label.style.bottom = `${valueBottom}px`;
-          valueLeft = gaugeRect.width + 50;
-          console.log(valueLeft);
-          if (status == "p") {
-            valueLeft = valueLeft - 20;
-          }
-          label.style.left = `${valueLeft}px`;
-        }
-        console.log(status);
-      }
+      //   //update and move the label
+      //   const gauges = document.querySelectorAll(".gauge");
+      //   motorValues = document.querySelectorAll(".motor-value");
+      //   for (var i = 0; i < motorValues.length; i++) {
+      //     console.log(i);
+      //     //update the text
+      //     label = motorValues[i];
+      //     gaugeRect = gauges[i].getBoundingClientRect();
+      //     labelRect = label.getBoundingClientRect();
+      //     label.innerHTML = val;
+      //     //update the position relative to the gauge
+      //     var valueBottom = (val / 180) * (gaugeRect.height - 16);
+      //     console.log(valueBottom);
+      //     //account for height of text
+      //     valueBottom = valueBottom - labelRect.height / 2 + 8;
+      //     label.style.bottom = `${valueBottom}px`;
+      //     valueLeft = gaugeRect.width + 50;
+      //     console.log(valueLeft);
+      //     if (status == "p") {
+      //       valueLeft = valueLeft - 20;
+      //     }
+      //     label.style.left = `${valueLeft}px`;
+      //   }
+      //   console.log(status);
+      // }
 
       function updateSensor(value) {
         const sensorBarFills = document.querySelectorAll(".sensor-bar-fill");
