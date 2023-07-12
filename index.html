@@ -1044,6 +1044,12 @@
         var received = window.pyrepl.read;
         var lastReceived = received[received.length - 1];
         if (lastReceived[0] == "{") {
+          //parse JSON
+          for (var i = 0; i < received.length; i++) {
+            if (received[i][2] == "m") {
+              lastReceived = received[i];
+            }
+          }
           console.log(lastReceived);
           var lastJSON = JSON.parse(lastReceived);
           var motorVals = lastJSON.m;
@@ -1093,7 +1099,7 @@
           console.log("before load data");
           loadData();
           console.log("after load data");
-          setInterval(runSerial, 100); // connected, start monitoring
+          setInterval(runSerial, 150); // connected, start monitoring
         } else {
           setTimeout(setupSerial, 250);
         }
