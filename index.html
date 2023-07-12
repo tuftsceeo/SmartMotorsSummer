@@ -778,7 +778,7 @@
       //hide and show the div for each page when the user clicks on tabs
       function changePage(pageName) {
         resizeCanvas();
-        //updateMotorValLabel();
+        updateMotorValLabel();
         console.log("change page");
         if (pageName == "explore") {
           document.getElementById("explore-page").style.display = "block";
@@ -820,7 +820,7 @@
       //change size of canvas
       window.onresize = function () {
         resizeCanvas();
-        //updateMotorValLabel();
+        updateMotorValLabel();
       };
 
       function resizeCanvas() {
@@ -887,7 +887,7 @@
           (element) => (element.style.transform = `rotate(${val / 360}turn)`)
         );
 
-        //updateMotorValLabel();
+        updateMotorValLabel();
 
         //update the graph position
         trainGraph.updateMotorVal(val);
@@ -897,36 +897,36 @@
         playGraph.redraw(-1);
       }
 
-      // function updateMotorValLabel() {
-      //   console.log("UPDATE MOTOR VAL LABEL");
-      //   //get the latest value
-      //   const val = document.querySelector(".motor-slider").value;
+      function updateMotorValLabel() {
+        console.log("UPDATE MOTOR VAL LABEL");
+        //get the latest value
+        const val = document.querySelector(".motor-slider").value;
 
-      //   //update and move the label
-      //   const gauges = document.querySelectorAll(".gauge");
-      //   motorValues = document.querySelectorAll(".motor-value");
-      //   for (var i = 0; i < motorValues.length; i++) {
-      //     console.log(i);
-      //     //update the text
-      //     label = motorValues[i];
-      //     gaugeRect = gauges[i].getBoundingClientRect();
-      //     labelRect = label.getBoundingClientRect();
-      //     label.innerHTML = val;
-      //     //update the position relative to the gauge
-      //     var valueBottom = (val / 180) * (gaugeRect.height - 16);
-      //     console.log(valueBottom);
-      //     //account for height of text
-      //     valueBottom = valueBottom - labelRect.height / 2 + 8;
-      //     label.style.bottom = `${valueBottom}px`;
-      //     valueLeft = gaugeRect.width + 50;
-      //     console.log(valueLeft);
-      //     if (status == "p") {
-      //       valueLeft = valueLeft - 20;
-      //     }
-      //     label.style.left = `${valueLeft}px`;
-      //   }
-      //   console.log(status);
-      // }
+        //update and move the label
+        const gauges = document.querySelectorAll(".gauge");
+        motorValues = document.querySelectorAll(".motor-value");
+        for (var i = 0; i < motorValues.length; i++) {
+          console.log(i);
+          //update the text
+          label = motorValues[i];
+          gaugeRect = gauges[i].getBoundingClientRect();
+          labelRect = label.getBoundingClientRect();
+          label.innerHTML = val;
+          //update the position relative to the gauge
+          var valueBottom = (val / 180) * (gaugeRect.height - 16);
+          console.log(valueBottom);
+          //account for height of text
+          valueBottom = valueBottom - labelRect.height / 2 + 8;
+          label.style.bottom = `${valueBottom}px`;
+          valueLeft = gaugeRect.width + 50;
+          console.log(valueLeft);
+          if (status == "p") {
+            valueLeft = valueLeft - 20;
+          }
+          label.style.left = `${valueLeft}px`;
+        }
+        console.log(status);
+      }
 
       function updateSensor(value) {
         const sensorBarFills = document.querySelectorAll(".sensor-bar-fill");
@@ -1025,13 +1025,12 @@
         //delete value in python
 
         //delete data point from python arrays
-        if (sensorVal == -1 && motorVal == -1) {
-          var dictionary = {};
-          dictionary["st"] = "t";
-          dictionary["t"] = 1;
-          dictionary["di"] = i; //delete index
-          window.pyrepl.write = JSON.stringify(dictionary);
-        }
+
+        var dictionary = {};
+        dictionary["st"] = "t";
+        dictionary["t"] = 1;
+        dictionary["di"] = i; //delete index
+        window.pyrepl.write = JSON.stringify(dictionary);
       }
 
       function loadData() {
