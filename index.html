@@ -9,7 +9,7 @@
     ></script>
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Poppins"
+      href="https://fonts.googleapis.com/css?family=Poppins:400,700,900"
     />
     <style>
       * {
@@ -27,22 +27,24 @@
       }
 
       .tab-link {
-        background-color: #555;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #232323;
         color: white;
         outline: none;
         border: none;
         cursor: pointer;
-        height: 100px;
+        height: 90px;
         width: 100%;
       }
 
       .tab-link:hover {
-        background-color: #777;
+        opacity: 0.8;
       }
 
       .tab-label {
         display: inline;
-        margin: auto;
       }
 
       /* motor and sensor square boxes on the explore page */
@@ -57,30 +59,36 @@
       }
 
       #sensor-box {
-        background-color: rgba(255, 199, 0, 0.5);
+        background-color: rgba(255, 199, 0, 0.35);
       }
 
       #motor-box {
-        background-color: rgba(6, 165, 255, 0.5);
+        background-color: rgba(6, 165, 255, 0.35);
       }
 
       /* fonts */
 
       h1 {
         font-size: 35px;
-        font-weight: black;
+        font-weight: 900;
       }
 
       h2 {
-        font-size: 28px;
+        font-size: 25px;
+        font-weight: 700;
+        color: #232323;
       }
 
       h3 {
-        font-size: 20px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #232323;
       }
 
       p {
-        font-size: 15px;
+        font-size: 18px;
+        font-weight: 400;
+        color: #232323;
       }
 
       h1,
@@ -97,9 +105,10 @@
       .root-container {
         position: fixed;
         bottom: 20px;
-        left: 20px;
+        right: 20px;
         text-align: center;
         margin-top: 20px;
+        z-index: 1;
       }
 
       .flex,
@@ -155,7 +164,7 @@
         height: 80%;
         width: 20px;
         margin: auto 20px;
-        border-style: 1px solid black;
+        border-style: 1px solid #232323;
       }
 
       #train-motor-slider {
@@ -165,7 +174,7 @@
         grid-column-start: 3;
         grid-column-end: 4;
         margin: auto;
-        margin-right: 20px;
+        margin-right: 30px;
       }
 
       .gauge {
@@ -217,7 +226,7 @@
         position: relative;
         width: 100%;
         height: 100%;
-        background: #fff47c;
+        background: #ffdb5e;
         border-radius: 10px;
         overflow: hidden;
         margin: 0 5px;
@@ -236,7 +245,7 @@
       .sensor-bar-fill {
         width: 0%;
         height: 100%;
-        background: #ffd65c;
+        background: #f3be00;
         transition: all 0.2s;
       }
 
@@ -245,7 +254,7 @@
         top: 50%;
         right: 5px;
         transform: translateY(-50%);
-        color: #000000;
+        color: #232323;
       }
 
       /* buttons */
@@ -256,15 +265,17 @@
         margin-bottom: 20px;
         margin-top: 20px;
         border-radius: 10px;
-        font-size: 15px;
+        font-size: 18px;
         padding: 5px;
       }
 
       .button {
         border: none;
         border-radius: 20px;
-        padding: 20px;
+        padding: 15px;
+        /* h2 font */
         font-size: 25px;
+        font-weight: 700;
         color: white;
       }
 
@@ -277,7 +288,7 @@
 
       #add-value,
       #start {
-        background-color: #3adb5e;
+        background-color: #4acb67;
       }
 
       #delete {
@@ -291,7 +302,7 @@
 
       .sensor-icon {
         display: block;
-        width: 40px;
+        width: 20%;
         margin: auto;
       }
 
@@ -300,16 +311,15 @@
         width: 15%;
         max-width: 50px;
         aspect-ratio: 1/1;
-        margin: auto;
         margin-left: 15px;
       }
 
       .dividing-line {
-        height: 4px;
-        border-radius: 1px;
+        height: 6px;
+        border-radius: 3px;
         width: 100%;
         display: none;
-        background: black;
+        background: #232323;
         margin-bottom: 20px;
       }
 
@@ -336,7 +346,6 @@
 
       .motor-value {
         text-align: right;
-        font-weight: bold;
         position: absolute;
         margin-left: 0;
       }
@@ -362,6 +371,7 @@
         grid-column-end: 4;
         grid-row-start: 3;
         grid-row-end: 4;
+        text-align: left;
       }
 
       #train-motor-high {
@@ -369,6 +379,11 @@
         grid-column-end: 4;
         grid-row-start: 1;
         grid-row-end: 2;
+      }
+
+      #train-motor-low,
+      #train-motor-high {
+        margin-left: 0;
       }
 
       .motor-high,
@@ -383,8 +398,12 @@
         padding: 10px;
       }
 
+      .table-heading {
+        color: white;
+      }
+
       tr {
-        border: 4px solid black;
+        border: 4px solid #232323;
       }
 
       table {
@@ -394,14 +413,14 @@
       }
 
       th {
-        background: black;
+        background: #232323;
         color: white;
       }
 
       /* canvas graph */
 
       .canvas-graph {
-        border: 4px solid black;
+        border: 4px solid #232323;
         grid-row-start: 2;
         grid-row-end: 3;
         grid-column-start: 4;
@@ -439,6 +458,28 @@
         #train-gauge,
         #play-gauge {
           display: none;
+        }
+
+        .tab-link {
+          flex-direction: column;
+        }
+
+        .tab-icon {
+          margin-left: 0;
+        }
+
+        /* decrease font sizes */
+
+        h1 {
+          font-size: 20px;
+        }
+
+        h2,
+        h3,
+        p,
+        .button,
+        .sensor-selector {
+          font-size: 16px;
         }
       }
 
@@ -490,7 +531,7 @@
                 <div class="gauge-fill"></div>
                 <div class="gauge-cover"></div>
               </div>
-              <p id="explore-motor-value" class="motor-value"></p>
+              <h3 id="explore-motor-value" class="motor-value"></h3>
             </div>
             <div id="slider-items" class="flex-column">
               <p class="motor-high">180</p>
@@ -509,20 +550,18 @@
         <div id="sensor-box" class="explore-box">
           <h2>Sensor</h2>
           <select class="sensor-selector" onchange="selectSensor()">
-            <option class="sensor-option" value="none">Select sensor</option>
+            <option class="sensor-option" value="none">Choose sensor</option>
             <option class="sensor-option" value="light">Light</option>
             <option class="sensor-option" value="distance">Distance</option>
             <option class="sensor-option" value="dial">Dial</option>
             <option class="sensor-option" value="slider">Slider</option>
           </select>
-
           <img class="sensor-icon" />
-
           <div id="sensor-bar-labels" class="flex">
             <p class="sensor-low"></p>
             <div class="sensor-bar">
               <div class="sensor-bar-fill"></div>
-              <span class="sensor-bar-text"><p>0%</p></span>
+              <span class="sensor-bar-text"><h3>0%</h3></span>
             </div>
             <p class="sensor-high"></p>
           </div>
@@ -545,7 +584,7 @@
             <div class="gauge-body">
               <div class="gauge-fill"></div>
             </div>
-            <p id="train-motor-value" class="motor-value"></p>
+            <h3 id="train-motor-value" class="motor-value"></h3>
           </div>
           <p id="train-motor-high" class="motor-high">180</p>
           <input
@@ -567,7 +606,7 @@
           <p id="train-sensor-low" class="sensor-low"></p>
           <div id="train-sensor-bar" class="sensor-bar">
             <div class="sensor-bar-fill"></div>
-            <span class="sensor-bar-text">0%</span>
+            <span class="sensor-bar-text"><h3>0%</h3></span>
           </div>
           <h2 id="train-sensor-label" class="sensor-label">Sensor</h2>
           <p id="train-sensor-high" class="sensor-high"></p>
@@ -577,9 +616,9 @@
           <h2>Training Values</h2>
           <table>
             <thead>
-              <th><h3>Sensor</h3></th>
-              <th><h3>Motor</h3></th>
-              <th><h3>Delete</h3></th>
+              <th><h3 class="table-heading">Sensor</h3></th>
+              <th><h3 class="table-heading">Motor</h3></th>
+              <th><h3 class="table-heading">Delete</h3></th>
             </thead>
             <tbody id="train-table"></tbody>
           </table>
@@ -602,7 +641,7 @@
             <div class="gauge-body">
               <div class="gauge-fill"></div>
             </div>
-            <p id="play-motor-value" class="motor-value"></p>
+            <h3 id="play-motor-value" class="motor-value"></h3>
           </div>
           <p id="train-motor-high" class="motor-high">180</p>
           <p id="train-motor-low" class="motor-low">0</p>
@@ -616,7 +655,7 @@
           <p id="train-sensor-low" class="sensor-low"></p>
           <div id="train-sensor-bar" class="sensor-bar">
             <div class="sensor-bar-fill"></div>
-            <span class="sensor-bar-text">0%</span>
+            <span class="sensor-bar-text"><h3>0%</h3></span>
           </div>
           <h2 id="train-sensor-label" class="sensor-label">Sensor</h2>
           <p id="train-sensor-high" class="sensor-high"></p>
@@ -626,8 +665,8 @@
           <h2>Training Values</h2>
           <table>
             <thead>
-              <th><h3>Sensor</h3></th>
-              <th><h3>Motor</h3></th>
+              <th><h3 class="table-heading">Sensor</h3></th>
+              <th><h3 class="table-heading">Motor</h3></th>
             </thead>
             <tbody id="play-table"></tbody>
           </table>
@@ -810,7 +849,7 @@
 
           document.getElementById("explore-tab").style.backgroundColor = "";
           document.getElementById("train-tab").style.backgroundColor = "";
-          document.getElementById("play-tab").style.backgroundColor = "#3ADB5E";
+          document.getElementById("play-tab").style.backgroundColor = "#4ACB67";
           status = "p";
           stop();
         }
@@ -1092,7 +1131,7 @@
 
         //change the button text and color
         button.value = "Start";
-        button.style.backgroundColor = "#3ADB5E";
+        button.style.backgroundColor = "#4ACB67";
       }
 
       function setupSerial() {
