@@ -174,7 +174,8 @@
         position: relative;
       }
 
-      #train-gauge {
+      #train-gauge,
+      #play-gauge {
         height: 100%;
         grid-row-start: 2;
         grid-row-end: 3;
@@ -435,7 +436,8 @@
           display: block;
         }
 
-        #train-gauge {
+        #train-gauge,
+        #play-gauge {
           display: none;
         }
       }
@@ -483,7 +485,7 @@
         <div id="motor-box" class="explore-box">
           <h2>Motor</h2>
           <div id="motor-items" class="flex">
-            <div class="gauge">
+            <div id="explore-gauge" class="gauge">
               <div class="gauge-body">
                 <div class="gauge-fill"></div>
                 <div class="gauge-cover"></div>
@@ -596,7 +598,7 @@
       <div class="responsive-flex">
         <div class="grid-container">
           <h2 class="motor-label">Motor</h2>
-          <div id="train-gauge" class="gauge">
+          <div id="play-gauge" class="gauge">
             <div class="gauge-body">
               <div class="gauge-fill"></div>
             </div>
@@ -635,7 +637,7 @@
     <script>
       var sensorArray = [];
       var motorArray = [];
-      let status;
+      let status = "e";
       var hoverDelete = -1;
 
       // function hoverDelete() {
@@ -778,7 +780,6 @@
       //hide and show the div for each page when the user clicks on tabs
       function changePage(pageName) {
         resizeCanvas();
-        updateMotorValLabel();
         console.log("change page");
         if (pageName == "explore") {
           document.getElementById("explore-page").style.display = "block";
@@ -791,8 +792,7 @@
             "#06A5FF";
           status = "e";
           stop();
-        }
-        if (pageName == "train") {
+        } else if (pageName == "train") {
           document.getElementById("explore-page").style.display = "none";
           document.getElementById("train-page").style.display = "block";
           document.getElementById("play-page").style.display = "none";
@@ -803,8 +803,7 @@
             "#C387FF";
           status = "t";
           stop();
-        }
-        if (pageName == "play") {
+        } else {
           document.getElementById("explore-page").style.display = "none";
           document.getElementById("train-page").style.display = "none";
           document.getElementById("play-page").style.display = "block";
@@ -815,6 +814,8 @@
           status = "p";
           stop();
         }
+
+        updateMotorValLabel();
       }
 
       //change size of canvas
@@ -901,31 +902,34 @@
         console.log("UPDATE MOTOR VAL LABEL");
         //get the latest value
         const val = document.querySelector(".motor-slider").value;
+        let gauge;
+        let label;
 
-        //update and move the label
-        const gauges = document.querySelectorAll(".gauge");
-        motorValues = document.querySelectorAll(".motor-value");
-        for (var i = 0; i < motorValues.length; i++) {
-          console.log(i);
-          //update the text
-          label = motorValues[i];
-          gaugeRect = gauges[i].getBoundingClientRect();
-          labelRect = label.getBoundingClientRect();
-          label.innerHTML = val;
-          //update the position relative to the gauge
-          var valueBottom = (val / 180) * (gaugeRect.height - 16);
-          console.log(valueBottom);
-          //account for height of text
-          valueBottom = valueBottom - labelRect.height / 2 + 8;
-          label.style.bottom = `${valueBottom}px`;
-          valueLeft = gaugeRect.width + 50;
-          console.log(valueLeft);
-          if (status == "p") {
-            valueLeft = valueLeft - 20;
-          }
-          label.style.left = `${valueLeft}px`;
+        if (status == "e") {
+          gauge = document.querySelector("#explore-gauge");
+          label = document.querySelector("#explore-motor-value");
+        } else if (status == "t") {
+          gauge = document.querySelector("#train-gauge");
+          label = document.querySelector("#train-motor-value");
+        } else {
+          gauge = document.querySelector("#play-gauge");
+          label = document.querySelector("#play-motor-value");
         }
-        console.log(status);
+
+        //update the text
+        label.innerHTML = val;
+
+        //update the position relative to the gauge
+        var valueBottom = (val / 180) * (gauge.offsetHeight - 16);
+
+        //account for height of text
+        valueBottom = valueBottom - label.offsetHeight / 2 + 8;
+        label.style.bottom = `${valueBottom}px`;
+        valueLeft = gauge.offsetWidth + 50;
+        if (status == "p") {
+          valueLeft = valueLeft - 20;
+        }
+        label.style.left = `${valueLeft}px`;
       }
 
       function updateSensor(value) {
@@ -1151,9 +1155,9 @@
       // }
 
       //functions that run on website load
-      changePage("explore");
       resizeCanvas();
-      // hoverDelete();
+      updateMotorValLabel();
+      changePage("explore");
     </script>
   </body>
 </html>
