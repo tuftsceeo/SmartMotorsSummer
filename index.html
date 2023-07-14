@@ -14,8 +14,6 @@
     <style>
       * {
         font-family: Poppins;
-      }
-      * {
         box-sizing: border-box;
       }
 
@@ -314,6 +312,13 @@
         margin-left: 15px;
       }
 
+      .clockwise-icon,
+      .counter-clockwise-icon {
+        display: inline;
+        height: 35px;
+        aspect-ratio: 1/1;
+      }
+
       .dividing-line {
         height: 6px;
         border-radius: 3px;
@@ -350,7 +355,8 @@
         margin-left: 0;
       }
 
-      #train-sensor-low {
+      #train-sensor-low,
+      #grid-clockwise-icon {
         grid-column-start: 3;
         grid-column-end: 4;
         grid-row-start: 4;
@@ -358,7 +364,8 @@
         margin: auto;
       }
 
-      #train-sensor-high {
+      #train-sensor-high,
+      #grid-counter-clockwise-icon {
         grid-column-start: 5;
         grid-column-end: 6;
         grid-row-start: 4;
@@ -559,11 +566,13 @@
           <img class="sensor-icon" />
           <div id="sensor-bar-labels" class="flex">
             <p class="sensor-low"></p>
+            <img class="clockwise-icon" />
             <div class="sensor-bar">
               <div class="sensor-bar-fill"></div>
               <span class="sensor-bar-text"><h3>0%</h3></span>
             </div>
             <p class="sensor-high"></p>
+            <img class="counter-clockwise-icon" />
           </div>
         </div>
       </div>
@@ -604,12 +613,17 @@
             height="350"
           ></canvas>
           <p id="train-sensor-low" class="sensor-low"></p>
+          <img id="grid-clockwise-icon" class="clockwise-icon" />
           <div id="train-sensor-bar" class="sensor-bar">
             <div class="sensor-bar-fill"></div>
             <span class="sensor-bar-text"><h3>0%</h3></span>
           </div>
           <h2 id="train-sensor-label" class="sensor-label">Sensor</h2>
           <p id="train-sensor-high" class="sensor-high"></p>
+          <img
+            id="grid-counter-clockwise-icon"
+            class="counter-clockwise-icon"
+          />
         </div>
         <div class="training-values">
           <div class="dividing-line"></div>
@@ -653,12 +667,14 @@
           ></canvas>
 
           <p id="train-sensor-low" class="sensor-low"></p>
+          <img id="grid-clockwise-icon" class="clockwise-icon" />
           <div id="train-sensor-bar" class="sensor-bar">
             <div class="sensor-bar-fill"></div>
             <span class="sensor-bar-text"><h3>0%</h3></span>
           </div>
           <h2 id="train-sensor-label" class="sensor-label">Sensor</h2>
           <p id="train-sensor-high" class="sensor-high"></p>
+          <img id="grid-clockwise-icon" id="counter-clockwise-icon" />
         </div>
         <div class="training-values">
           <div class="dividing-line"></div>
@@ -677,17 +693,19 @@
       var sensorArray = [];
       var motorArray = [];
       let status = "e";
-      var hoverDelete = -1;
+      var hoverDeleteIndex = -1;
 
-      // function hoverDelete() {
-      //   console.log("HOVER DELETE");
-      //   // if (mouseover) {
-      //   //   var i = button.parentNode.parentNode.rowIndex;
-      //   //   hoverDelete = i;
-      //   // } else {
-      //   //   hoverDelete = -1;
-      //   // }
-      // }
+      function hoverDelete(mouseover, button) {
+        console.log("HOVER DELETE");
+        if (mouseover) {
+          var i = button.parentNode.parentNode.rowIndex;
+          //subtract 1 to account for the table header
+          i = i - 1;
+          hoverDeleteIndex = i;
+        } else {
+          hoverDeleteIndex = -1;
+        }
+      }
 
       class Graph {
         constructor(c) {
@@ -718,8 +736,8 @@
           if (NNi != -1) {
             this.highlightNN(NNi);
           }
-          if (hoverDelete != -1) {
-            this.highlightDelete(hoverDelete);
+          if (hoverDeleteIndex != -1) {
+            this.highlightDelete(hoverDeleteIndex);
           }
         }
 
@@ -892,17 +910,19 @@
         const lowLabels = document.querySelectorAll(".sensor-low");
         const highLabels = document.querySelectorAll(".sensor-high");
         const icon = document.querySelector(".sensor-icon");
+        const cIcons = document.querySelectorAll(".clockwise-icon");
+        const ccIcons = document.querySelectorAll(".counter-clockwise-icon");
         if (sensorName == "light") {
           lowLabels.forEach((element) => (element.innerHTML = "Dark"));
           highLabels.forEach((element) => (element.innerHTML = "Light"));
           icon.setAttribute("src", "light_icon.png");
         } else if (sensorName == "distance") {
-          lowLabels.forEach((element) => (element.innerHTML = "Close"));
-          highLabels.forEach((element) => (element.innerHTML = "Far"));
+          lowLabels.forEach((element) => (element.innerHTML = "Far"));
+          highLabels.forEach((element) => (element.innerHTML = "Close"));
           icon.setAttribute("src", "distance_icon.png");
         } else if (sensorName == "dial") {
-          lowLabels.forEach((element) => (element.innerHTML = "Left"));
-          highLabels.forEach((element) => (element.innerHTML = "Right"));
+          lowLabels.forEach((element) => (element.innerHTML = ""));
+          highLabels.forEach((element) => (element.innerHTML = ""));
           icon.setAttribute("src", "dial_icon.png");
         } else if (sensorName == "slider") {
           lowLabels.forEach((element) => (element.innerHTML = "Left"));
@@ -912,6 +932,20 @@
           lowLabels.forEach((element) => (element.innerHTML = ""));
           highLabels.forEach((element) => (element.innerHTML = ""));
           icon.setAttribute("src", "");
+        }
+
+        if (sensorName == "dial") {
+          cIcons.forEach((element) => (element.style.display = "block"));
+          ccIcons.forEach((element) => (element.style.display = "block"));
+          cIcons.forEach((element) =>
+            element.setAttribute("src", "clockwise_icon.png")
+          );
+          ccIcons.forEach((element) =>
+            element.setAttribute("src", "counterclockwise_icon.png")
+          );
+        } else {
+          cIcons.forEach((element) => (element.style.display = "none"));
+          ccIcons.forEach((element) => (element.style.display = "none"));
         }
       }
 
@@ -1018,10 +1052,12 @@
         deleteButton.setAttribute("class", "button");
         deleteButton.innerHTML = "x";
         deleteButton.setAttribute("onclick", "deleteValue(this)");
-        // deleteButton.setAttribute("onmouseover", "hoverDelete(event, this)");
-        // deleteButton.setAttribute("onmouseout", "hoverDelete(event, this)");
-        // deleteButton.addEventListener("mouseover", hoverDelete());
-        // deleteButton.addEventListener("mouseout", hoverDelete());
+        deleteButton.addEventListener("mouseover", function () {
+          hoverDelete(true, this);
+        });
+        deleteButton.addEventListener("mouseout", function () {
+          hoverDelete(false, this);
+        });
 
         //make a cell with the delete button
         var c3 = document.createElement("td");
@@ -1182,16 +1218,6 @@
           }
         }
       }
-
-      // function hoverDelete() {
-      //   console.log("HOVER DELETE");
-      //   // if (mouseover) {
-      //   //   var i = button.parentNode.parentNode.rowIndex;
-      //   //   hoverDelete = i;
-      //   // } else {
-      //   //   hoverDelete = -1;
-      //   // }
-      // }
 
       //functions that run on website load
       resizeCanvas();
