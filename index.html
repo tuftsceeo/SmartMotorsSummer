@@ -1104,8 +1104,6 @@
         console.log("delete index");
         console.log(i);
 
-        //delete value in python
-
         //delete data point from python arrays
 
         var dictionary = {};
@@ -1113,6 +1111,9 @@
         dictionary["t"] = 1;
         dictionary["di"] = i; //delete index
         window.pyrepl.write = JSON.stringify(dictionary);
+
+        //stop highlighting the point that is deleted
+        hoverDeleteIndex = -1;
       }
 
       function loadData() {
@@ -1125,7 +1126,7 @@
         var received = window.pyrepl.read;
         var lastReceived = received[received.length - 1];
         if (lastReceived[0] == "{") {
-          //parse JSON
+          //parse JSON to find the motor and sensor array
           for (var i = 0; i < received.length; i++) {
             if (received[i][2] == "m") {
               lastReceived = received[i];
