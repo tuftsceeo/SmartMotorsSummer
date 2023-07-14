@@ -1,526 +1,758 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Web Server</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      defer="defer"
+      src="https://cdn.jsdelivr.net/gh/gabrielsessions/pyrepl-js/build/main.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Poppins:400,700,900"
+    />
     <style>
+      * {
+        font-family: Poppins;
+        box-sizing: border-box;
+      }
+
+      /* tabs */
+
+      .tab-container {
+        display: flex;
+        margin-bottom: 20px;
+      }
+
+      .tab-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #232323;
+        color: white;
+        outline: none;
+        border: none;
+        cursor: pointer;
+        height: 90px;
+        width: 100%;
+      }
+
+      .tab-link:hover {
+        opacity: 0.8;
+      }
+
+      .tab-label {
+        display: inline;
+      }
+
+      /* motor and sensor square boxes on the explore page */
+
+      .explore-box {
+        text-align: center;
+        /* this makes them squares */
+        aspect-ratio: 1/1;
+        margin: 20px;
+        padding: 20px;
+        border-radius: 20px;
+      }
+
+      #sensor-box {
+        background-color: rgba(255, 199, 0, 0.35);
+      }
+
+      #motor-box {
+        background-color: rgba(6, 165, 255, 0.35);
+      }
+
+      /* fonts */
+
+      h1 {
+        font-size: 35px;
+        font-weight: 900;
+      }
+
       h2 {
-        font-size: 2.3rem;
-        text-align: center;
+        font-size: 25px;
+        font-weight: 700;
+        color: #232323;
       }
+
       h3 {
-        font-size: 2.3rem;
-        text-align: center;
+        font-size: 18px;
+        font-weight: 700;
+        color: #232323;
       }
+
       p {
-        font-size: 1.9rem;
+        font-size: 18px;
+        font-weight: 400;
+        color: #232323;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        padding: 0px;
+        border: 0px;
+        margin: 0px;
+      }
+
+      /* containers */
+
+      .root-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        text-align: center;
+        margin-top: 20px;
+        z-index: 1;
+      }
+
+      .flex,
+      .responsive-flex {
+        display: flex;
+        margin: auto;
+        margin-top: 20px;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      .responsive-flex {
+        margin-top: 0px;
+      }
+
+      #sensor-bar-labels {
+        height: 15%;
+        max-height: 40px;
+      }
+
+      #motor-items {
+        /* the gauge inherits this height */
+        height: 80%;
+      }
+
+      .flex-column {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .page {
+        margin: auto;
+        margin-top: 20px;
+        width: 100vw;
         text-align: center;
       }
 
-      /* Progress bar code */
-      .progress {
-        position: relative;
-        width: 250px;
-        height: 40px;
-        background: #fff47c;
-        border-radius: 5px;
-        overflow: hidden;
-        margin: auto;
+      .sensor-items {
+        margin-top: 20px;
       }
 
-      /* Progress bar code */
-      .progress__fill {
+      .training-values {
+        margin: 20px;
+        text-align: center;
+      }
+
+      .motor-slider {
+        -webkit-appearance: slider-vertical;
+        height: 80%;
+        width: 20px;
+        margin: auto 20px;
+        border-style: 1px solid #232323;
+      }
+
+      #train-motor-slider {
+        height: 100%;
+        grid-row-start: 2;
+        grid-row-end: 3;
+        grid-column-start: 3;
+        grid-column-end: 4;
+        margin: auto;
+        margin-right: 30px;
+      }
+
+      .gauge {
+        height: 80%;
+        aspect-ratio: 1/2;
+        position: relative;
+      }
+
+      #train-gauge,
+      #play-gauge {
+        height: 100%;
+        grid-row-start: 2;
+        grid-row-end: 3;
+        grid-column-start: 2;
+        grid-column-end: 3;
+      }
+
+      .gauge-body {
+        height: 100%;
+        aspect-ratio: 1/2;
+        background: #232323;
+        position: relative;
+        border-top-left-radius: 200% 100%;
+        border-bottom-left-radius: 200% 100%;
+        overflow: hidden;
+      }
+      .gauge-fill {
+        position: absolute;
+        left: 100%;
+        top: 0;
+        height: 100%;
+        width: 100%;
+        background: #06a5ff;
+        transform-origin: center left;
+        transition: transform 0.2s ease-out;
+        transform: rotate(0.25turn);
+      }
+
+      .grid-container {
+        display: grid;
+        grid-template-columns: auto auto auto auto auto;
+        width: fit-content;
+        gap: 20px;
+      }
+
+      /* sensor progress bar */
+
+      .sensor-bar {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #ffdb5e;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 0 5px;
+      }
+
+      #train-sensor-bar {
+        margin: 0;
+        padding: 0;
+        height: 40px;
+        grid-column-start: 4;
+        grid-column-end: 5;
+        grid-row-start: 4;
+        grid-row-end: 5;
+      }
+
+      .sensor-bar-fill {
         width: 0%;
         height: 100%;
-        background: #ffd65c;
+        background: #f3be00;
         transition: all 0.2s;
       }
 
-      /* Progress bar code */
-      .progress__text {
+      .sensor-bar-text {
         position: absolute;
         top: 50%;
         right: 5px;
         transform: translateY(-50%);
-        font: bold 16px "Quicksand", sans-serif;
-        color: #000000;
-      }
-
-      /* Gauge and Slider for motor */
-
-      .gauge {
-        max-width: 250px;
-        font-family: "Roboto", sans-serif;
-        font-size: 32px;
         color: #232323;
       }
-      .gauge__body {
-        width: 100%;
-        height: 0;
-        padding-bottom: 50%;
-        background: #232323;
-        position: relative;
-        border-top-left-radius: 100% 200%;
-        border-top-right-radius: 100% 200%;
-        overflow: hidden;
-      }
-      .gauge__fill {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: inherit;
-        height: 100%;
-        background: #06a5ff;
-        transform-origin: center top;
-        transform: rotate(0.25turn);
-        transition: transform 0.2s ease-out;
-      }
-      .gauge__cover {
-        width: 75%;
-        height: 150%;
-        background: #ffffff;
-        border-radius: 50%;
-        position: absolute;
-        top: 25%;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-bottom: 25%;
-        box-sizing: border-box;
-      }
-      .slider {
-        -webkit-appearance: none;
-        margin: 14px;
-        width: 360px;
-        height: 25px;
-        background: #9fc5e8;
-        outline: none;
-        -webkit-transition: 0.2s;
-        transition: opacity 0.2s;
-      }
-      .slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 35px;
-        height: 35px;
-        background: #003249;
-        cursor: pointer;
-      }
-      .slider::-moz-range-thumb {
-        width: 35px;
-        height: 35px;
-        background: #003249;
-        cursor: pointer;
-      }
-      * {
-        box-sizing: border-box;
+
+      /* buttons */
+
+      .sensor-selector {
+        max-width: 200px;
+        margin: auto;
+        margin-bottom: 20px;
+        margin-top: 20px;
+        border-radius: 10px;
+        font-size: 18px;
+        padding: 5px;
       }
 
-      /* Set height of body and the document to 100% */
-
-      body,
-      html {
-        height: 100%;
-        margin: 0;
-        font-family: Arial;
-      }
-      /* Style tab links */
-
-      .tablink {
-        background-color: #555;
-        color: white;
-        float: left;
-        border: none;
-        outline: none;
-        cursor: pointer;
-        padding: 14px 16px;
-        font-size: 20px;
-        width: 33.33%;
-      }
-      .tablink:hover {
-        background-color: #777;
-      }
-      /* Style the tab content (and add height:100% for full page content) */
-
-      .tabcontent {
-        color: black;
-        display: none;
-        padding: 10px 20px;
-      }
-
-      .graph {
-        padding-left: 0;
-        padding-right: 0;
-        margin-left: auto;
-        margin-right: auto;
-        display: block;
-      }
-
-      /* Button to add and delete valuues from the table */
       .button {
         border: none;
-        color: white;
-        padding: 10px 10px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        margin: 4px 2px;
-        transition-duration: 0.4s;
-        cursor: pointer;
-        border-radius: 8px;
-      }
-      .button1 {
-        font-size: 20px;
-        background-color: green;
-        border: 5px solid grey;
-        color: white;
-      }
-      .button1:hover {
-        border: 5px solid white;
+        border-radius: 20px;
+        padding: 15px;
+        /* h2 font */
+        font-size: 25px;
+        font-weight: 700;
         color: white;
       }
 
-      .button2 {
-        font-size: 20px;
-        background-color: white;
-        color: black;
-        border: 8px solid #4acb67;
+      .button:hover {
+        box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.15);
+        transition: box-shadow 0.2s ease-in-out;
+        /* makes the button a shade lighter on hover */
+        opacity: 0.9;
       }
-      .button2:hover {
+
+      #add-value,
+      #start {
         background-color: #4acb67;
+      }
+
+      #delete {
+        background-color: #ff5151;
+        height: 40px;
+        width: 40px;
+        padding: 0px;
+      }
+
+      /* static graphics */
+
+      .sensor-icon {
+        display: block;
+        width: 20%;
+        margin: auto;
+      }
+
+      .tab-icon {
+        display: inline;
+        width: 15%;
+        max-width: 50px;
+        aspect-ratio: 1/1;
+        margin-left: 15px;
+      }
+
+      .clockwise-icon,
+      .counter-clockwise-icon {
+        display: none;
+        height: 35px;
+        aspect-ratio: 1/1;
+      }
+
+      .dividing-line {
+        height: 6px;
+        border-radius: 3px;
+        width: 100%;
+        display: none;
+        background: #232323;
+        margin-bottom: 20px;
+      }
+
+      .motor-label,
+      .sensor-label {
+        text-align: center;
+      }
+
+      #train-sensor-label {
+        grid-column-start: 4;
+        grid-column-end: 5;
+        grid-row-start: 5;
+        grid-row-end: 6;
+      }
+
+      .motor-label {
+        writing-mode: vertical-rl;
+        transform: scale(-1);
+        grid-row-start: 2;
+        grid-row-end: 3;
+        grid-column-start: 1;
+        grid-column-end: 2;
+      }
+
+      .motor-value {
+        text-align: right;
+        position: absolute;
+        margin-left: 0;
+      }
+
+      #train-sensor-low,
+      #grid-clockwise-icon {
+        grid-column-start: 3;
+        grid-column-end: 4;
+        grid-row-start: 4;
+        grid-row-end: 5;
+        margin: auto;
+      }
+
+      #train-sensor-high,
+      #grid-counter-clockwise-icon {
+        grid-column-start: 5;
+        grid-column-end: 6;
+        grid-row-start: 4;
+        grid-row-end: 5;
+        margin: auto;
+      }
+
+      #train-motor-low {
+        grid-column-start: 3;
+        grid-column-end: 4;
+        grid-row-start: 3;
+        grid-row-end: 4;
+        text-align: left;
+      }
+
+      #train-motor-high {
+        grid-column-start: 3;
+        grid-column-end: 4;
+        grid-row-start: 1;
+        grid-row-end: 2;
+      }
+
+      #train-motor-low,
+      #train-motor-high {
+        margin-left: 0;
+      }
+
+      .motor-high,
+      .motor-low {
+        margin: auto;
+      }
+
+      /* training values table formatting */
+
+      td,
+      th {
+        padding: 10px;
+      }
+
+      .table-heading {
         color: white;
       }
-      .deletebutton {
-        background-color: #ff5151;
-        font-weight: bold;
-        color: white;
-        border: 0px;
-        border-radius: 50%;
-        height: 25px;
-        width: 25px;
-        font-size: 20px;
-        text-align: center;
+
+      tr {
+        border: 4px solid #232323;
       }
 
       table {
+        margin: 20px auto;
         border-collapse: collapse;
-        width: 350px;
+        border-radius: 20px;
       }
-      th,
-      td {
-        text-align: center;
-        padding: 8px;
-      }
-      tr:nth-child(even) {
-        background-color: #f2f2f2;
-      }
+
       th {
-        background-color: #232323;
+        background: #232323;
         color: white;
       }
-      .center {
-        margin-left: auto;
-        margin-right: auto;
+
+      /* canvas graph */
+
+      .canvas-graph {
+        border: 4px solid #232323;
+        grid-row-start: 2;
+        grid-row-end: 3;
+        grid-column-start: 4;
+        grid-column-end: 5;
       }
 
-      .flex-row {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-      }
+      /* breakpoints */
 
-      @media (max-width: 985px) {
-        .flex-row {
-          display: block;
+      @media (orientation: landscape) {
+        .explore-box {
+          width: 30vw;
+        }
+
+        .canvas-graph {
+          width: 30vw;
         }
       }
 
-      #myTable.hideDelete tr > *:nth-child(3) {
-        display: none;
+      /* breakpoint: designed for phone in portrait mode */
+
+      @media (max-width: 400px) and (orientation: portrait) {
+        .responsive-flex {
+          display: block;
+        }
+
+        .explore-box {
+          width: 75vw;
+          margin: 20px auto;
+        }
+
+        .dividing-line {
+          display: block;
+        }
+
+        #train-gauge,
+        #play-gauge {
+          display: none;
+        }
+
+        .tab-link {
+          flex-direction: column;
+        }
+
+        .tab-icon {
+          margin-left: 0;
+        }
+
+        /* decrease font sizes */
+
+        h1 {
+          font-size: 20px;
+        }
+
+        h2,
+        h3,
+        p,
+        .button,
+        .sensor-selector {
+          font-size: 16px;
+        }
       }
 
-      .motor_label {
-        text-align: center;
-      }
+      /* breakpoint: designed for tablets in portrait mode */
+      @media (min-width: 400px) and (orientation: portrait) {
+        .responsive-flex {
+          display: block;
+        }
 
-      .motor {
-        width: 250px;
-        height: 125px;
+        .explore-box {
+          width: 60vw;
+          margin: 20px auto;
+        }
+
+        .dividing-line {
+          display: block;
+        }
       }
     </style>
   </head>
-  <body>
-    <button
-      class="tablink"
-      onclick="openPage('explore', this, '#06A5FF')"
-      id="defaultOpen"
-    >
-      Explore <i class="fa-brands fa-wpexplorer"></i>
-    </button>
-    <button class="tablink" onclick="openPage('train', this, '#C387FF')">
-      Train <i class="fa-solid fa-code-branch"></i>
-    </button>
-    <button class="tablink" onclick="openPage('play', this, '#4ACB67')">
-      Play <i class="fa-solid fa-play"></i>
-    </button>
 
-    <div id="explore" class="tabcontent">
-      <h2></h2>
+  <body onload="setupSerial();">
+    <! -- tabs -->
+    <div class="tab-container">
+      <button id="explore-tab" class="tab-link" onclick="changePage('explore')">
+        <h1 class="tab-label">Explore</h1>
+        <img class="tab-icon" src="explore_icon.png" />
+      </button>
+      <button id="train-tab" class="tab-link" onclick="changePage('train')">
+        <h1 class="tab-label">Train</h1>
+        <img class="tab-icon" src="train_icon.png" />
+      </button>
+      <button id="play-tab" class="tab-link" onclick="changePage('play')">
+        <h1 class="tab-label">Play</h1>
+        <img class="tab-icon" src="play_icon.png" />
+      </button>
     </div>
-
-    <div id="train" class="tabcontent">
-      <h2></h2>
+    <div class="root-container">
+      <div id="root"></div>
     </div>
-
-    <div id="play" class="tabcontent">
-      <p>
-        <button
-          class="button button1"
-          type="button"
-          onclick="test()"
-          id="toggle_play"
-        >
-          Play!
-        </button>
-      </p>
-    </div>
-
-    <div id="train_test_button" class="tabcontent">
-      <h2>
-        <button
-          class="button button2"
-          type="button"
-          onclick="addvalue(false, 0, 0)"
-        >
-          Add Value
-        </button>
-      </h2>
-    </div>
-
-    <p id="motor_label" class="motor_label">Motor</p>
-
-    <div class="flex-row">
-      <div id="motor" class="motor">
-        <div class="gauge">
-          <div class="gauge__body">
-            <div class="gauge__fill"></div>
-            <div class="gauge__cover"></div>
+    <! -- explore page -->
+    <div id="explore-page" class="page">
+      <div class="responsive-flex">
+        <div id="motor-box" class="explore-box">
+          <h2>Motor</h2>
+          <div id="motor-items" class="flex">
+            <div id="explore-gauge" class="gauge">
+              <div class="gauge-body">
+                <div class="gauge-fill"></div>
+                <div class="gauge-cover"></div>
+              </div>
+              <h3 id="explore-motor-value" class="motor-value"></h3>
+            </div>
+            <div id="slider-items" class="flex-column">
+              <p class="motor-high">180</p>
+              <input
+                class="motor-slider"
+                type="range"
+                min="0"
+                max="180"
+                value="90"
+                oninput="moveMotor(this.value)"
+              />
+              <p class="motor-low">0</p>
+            </div>
+          </div>
+        </div>
+        <div id="sensor-box" class="explore-box">
+          <h2>Sensor</h2>
+          <select class="sensor-selector" onchange="selectSensor()">
+            <option class="sensor-option" value="none">Choose sensor</option>
+            <option class="sensor-option" value="light">Light</option>
+            <option class="sensor-option" value="distance">Distance</option>
+            <option class="sensor-option" value="dial">Dial</option>
+            <option class="sensor-option" value="slider">Slider</option>
+          </select>
+          <img class="sensor-icon" />
+          <div id="sensor-bar-labels" class="flex">
+            <p class="sensor-low"></p>
+            <img class="clockwise-icon" />
+            <div class="sensor-bar">
+              <div class="sensor-bar-fill"></div>
+              <span class="sensor-bar-text"><h3>0%</h3></span>
+            </div>
+            <p class="sensor-high"></p>
+            <img class="counter-clockwise-icon" />
           </div>
         </div>
       </div>
-
-      <div>
-        <!-- GRAPH -->
-        <div id="my_graph" class="tabcontent">
+    </div>
+    <! -- train page -->
+    <div id="train-page" class="page">
+      <input
+        id="add-value"
+        class="button"
+        type="button"
+        value="Add Value"
+        onclick="addValue(-1, -1)"
+      />
+      <div class="responsive-flex">
+        <div class="grid-container">
+          <h2 class="motor-label">Motor</h2>
+          <div id="train-gauge" class="gauge">
+            <div class="gauge-body">
+              <div class="gauge-fill"></div>
+            </div>
+            <h3 id="train-motor-value" class="motor-value"></h3>
+          </div>
+          <p id="train-motor-high" class="motor-high">180</p>
+          <input
+            type="range"
+            min="0"
+            max="180"
+            value="90"
+            id="train-motor-slider"
+            class="motor-slider"
+            oninput="moveMotor(this.value)"
+          />
+          <p id="train-motor-low" class="motor-low">0</p>
           <canvas
-            class="graph"
-            id="myCanvas"
-            width="401"
-            height="340"
-            style="border: 0px solid #d3d3d3"
-          >
-            Your browser does not support the HTML canvas tag.</canvas
-          >
-        </div>
-
-        <!-- LIGHT SENSOR -->
-        <div id="light_sensor" class="tabcontent">
-          <! –– Progress Bar code  ––>
-          <div class="progress">
-            <div class="progress__fill"></div>
-            <span class="progress__text">0%</span>
+            id="train-canvas-graph"
+            class="canvas-graph"
+            width="450"
+            height="350"
+          ></canvas>
+          <p id="train-sensor-low" class="sensor-low"></p>
+          <img id="grid-clockwise-icon" class="clockwise-icon" />
+          <div id="train-sensor-bar" class="sensor-bar">
+            <div class="sensor-bar-fill"></div>
+            <span class="sensor-bar-text"><h3>0%</h3></span>
           </div>
-
-          <p>
-            Sensor Reading
-            <strong><span id="temp">--.-</span> </strong>
-          </p>
+          <h2 id="train-sensor-label" class="sensor-label">Sensor</h2>
+          <p id="train-sensor-high" class="sensor-high"></p>
+          <img
+            id="grid-counter-clockwise-icon"
+            class="counter-clockwise-icon"
+          />
         </div>
-      </div>
-
-      <!-- TABLE -->
-      <div id="tableeee" class="tabcontent">
-        <h3>Training Values</h3>
-        <table id="myTable" class="center">
-          <thead>
-            <th>Sensor Value</th>
-            <th>Motor Value</th>
-            <th>Delete</th>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
+        <div class="training-values">
+          <div class="dividing-line"></div>
+          <h2>Training Values</h2>
+          <table>
+            <thead>
+              <th><h3 class="table-heading">Sensor</h3></th>
+              <th><h3 class="table-heading">Motor</h3></th>
+              <th><h3 class="table-heading">Delete</h3></th>
+            </thead>
+            <tbody id="train-table"></tbody>
+          </table>
+        </div>
       </div>
     </div>
+    <! -- play page -->
+    <div id="play-page" class="page">
+      <input
+        id="start"
+        class="button"
+        type="button"
+        value="Start"
+        onclick="startStop()"
+      />
+      <div class="responsive-flex">
+        <div class="grid-container">
+          <h2 class="motor-label">Motor</h2>
+          <div id="play-gauge" class="gauge">
+            <div class="gauge-body">
+              <div class="gauge-fill"></div>
+            </div>
+            <h3 id="play-motor-value" class="motor-value"></h3>
+          </div>
+          <p id="train-motor-high" class="motor-high">180</p>
+          <p id="train-motor-low" class="motor-low">0</p>
+          <canvas
+            id="play-canvas-graph"
+            class="canvas-graph"
+            width="450"
+            height="350"
+          ></canvas>
 
+          <p id="train-sensor-low" class="sensor-low"></p>
+          <img id="grid-clockwise-icon" class="clockwise-icon" />
+          <div id="train-sensor-bar" class="sensor-bar">
+            <div class="sensor-bar-fill"></div>
+            <span class="sensor-bar-text"><h3>0%</h3></span>
+          </div>
+          <h2 id="train-sensor-label" class="sensor-label">Sensor</h2>
+          <p id="train-sensor-high" class="sensor-high"></p>
+          <img
+            id="grid-counter-clockwise-icon"
+            class="counter-clockwise-icon"
+          />
+        </div>
+        <div class="training-values">
+          <div class="dividing-line"></div>
+          <h2>Training Values</h2>
+          <table>
+            <thead>
+              <th><h3 class="table-heading">Sensor</h3></th>
+              <th><h3 class="table-heading">Motor</h3></th>
+            </thead>
+            <tbody id="play-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
     <script>
-      const sensor_array = [];
-      const motor_array = [];
-      var g;
+      var sensorArray = [];
+      var motorArray = [];
+      let status = "e";
+      var hoverDeleteIndex = -1;
+
+      function hoverDelete(mouseover, button) {
+        console.log("HOVER DELETE");
+        if (mouseover) {
+          var i = button.parentNode.parentNode.rowIndex;
+          //subtract 1 to account for the table header
+          i = i - 1;
+          hoverDeleteIndex = i;
+        } else {
+          hoverDeleteIndex = -1;
+        }
+      }
 
       class Graph {
         constructor(c) {
           // Constructor
           this.canvas = c;
           this.ctx = this.canvas.getContext("2d");
-          // GRID width
-          this.bw = this.canvas.width;
-          // GRID height
-          this.bh = this.canvas.height;
-          // GRID PADDING
-          this.start = 60;
-          // GRID SPACING
-          this.gap = 50;
-
-          this.last_sensor_val = 50;
-          this.last_motor_val = 90;
-
+          this.lastSensorVal = 50;
+          this.lastMotorVal = 90;
           this.redraw(-1);
         }
 
-        update_sensor_val(sval) {
-          this.last_sensor_val = sval;
+        updateSensorVal(sval) {
+          this.lastSensorVal = sval;
         }
 
-        update_motor_val(mval) {
-          this.last_motor_val = mval;
+        updateMotorVal(mval) {
+          this.lastMotorVal = mval;
         }
 
-        redraw(NN_index) {
-          console.log("Update graph");
+        redraw(NNi) {
+          //console.log("Update graph");
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-          if (!explore_mode) {
-            this.draw_axes();
-            this.draw_sensorline(this.last_sensor_val);
-            this.draw_motorline(this.last_motor_val);
-            for (var i = 0; i < sensor_array.length; i++) {
-              this.draw_point(sensor_array[i], motor_array[i]);
-            }
-            if (NN_index != -1) {
-              this.highlight_NN(NN_index);
-            }
+          this.drawSensorLine(this.lastSensorVal);
+          this.drawMotorLine(this.lastMotorVal);
+          for (var i = 0; i < sensorArray.length; i++) {
+            this.drawPoint(sensorArray[i], motorArray[i]);
           }
-          this.draw_slider();
-        }
-
-        convert_x(x) {
-          // Assume the svals are 0-100 convert to a scale - start to bw-start
-          var cx = (this.bw - this.start * 2) * (x / 100) + this.start;
-          return cx;
-        }
-
-        convert_y(y) {
-          // Assume the svals are 0-100 convert to a scale - start to bh-start
-          var cy = ((this.bh - this.start * 2) * (180 - y)) / 180 + this.start;
-          return cy;
-        }
-        draw_sensorline(sval) {
-          this.ctx.beginPath();
-          this.ctx.lineWidth = 4;
-          this.ctx.strokeStyle = "#FFD65C";
-          this.ctx.moveTo(this.convert_x(sval), this.convert_y(0));
-          this.ctx.lineTo(this.convert_x(sval), this.convert_y(180));
-          this.ctx.stroke();
-        }
-        draw_motorline(mval) {
-          this.ctx.beginPath();
-          this.ctx.lineWidth = 4;
-          this.ctx.strokeStyle = "#06A5FF";
-          this.ctx.moveTo(this.convert_x(0), this.convert_y(mval));
-          this.ctx.lineTo(this.convert_x(100), this.convert_y(mval));
-          this.ctx.stroke();
-        }
-
-        draw_axes() {
-          this.ctx.lineWidth = 1;
-          this.ctx.beginPath();
-          this.ctx.strokeStyle = "#e8e8e8";
-          for (var x = 0; x <= 100; x += 20) {
-            //vert lines
-            this.ctx.moveTo(this.convert_x(x), this.convert_y(0));
-            this.ctx.lineTo(this.convert_x(x), this.convert_y(180));
+          if (NNi != -1) {
+            this.highlightNN(NNi);
           }
-          for (var y = 0; y <= 180; y += 45) {
-            //horz lines
-            this.ctx.moveTo(this.convert_x(0), this.convert_y(y));
-            this.ctx.lineTo(this.convert_x(100), this.convert_y(y));
+          if (hoverDeleteIndex != -1) {
+            this.highlightDelete(hoverDeleteIndex);
           }
-          this.ctx.stroke();
-          this.ctx.lineWidth = 2;
-          this.ctx.beginPath();
-          this.ctx.strokeStyle = "#232323";
-          this.ctx.rect(
-            this.convert_x(0),
-            this.convert_y(0),
-            this.convert_x(100) - this.convert_x(0),
-            this.convert_y(180) - this.convert_y(0)
-          );
-          this.ctx.stroke();
-
-          this.ctx.fillStyle = "#232323";
-          this.ctx.beginPath();
-
-          // horizontal axis
-          this.ctx.font = "bold 15px Arial";
-          this.ctx.fillText(
-            "Sensor Value",
-            this.convert_x(35),
-            this.convert_y(-30)
-          );
-          this.ctx.font = "15px Arial";
-          this.ctx.fillText("0", 20, 320);
-          this.ctx.fillText("100", 340, 320);
-          // vertical axis
-          this.ctx.fillText("180", 10, 40);
-          // save orientation again
-          this.ctx.save();
-          // hold top-right hand corner when rotating
-          this.ctx.translate(330 - 1, 0);
-          // rotate 270 degrees
-          this.ctx.rotate((3 * Math.PI) / 2);
-          //this.ctx.font = "16px serif";
-          //this.ctx.fillStyle = "#0000FF"; // blue
-          this.ctx.textAlign = "right";
-          // draw relative to translate point
-          //this.ctx.fillText( "right-aligned 270 deg", -75, -300 );
-          this.ctx.font = "bold 15px Arial";
-          this.ctx.fillText("Motor Value", -130, -318);
-          this.ctx.restore();
         }
 
-        draw_point(sval, mval) {
-          //Assume the mvals are 0-180 convert to a scale - start+bh to star
-          this.ctx.beginPath();
-          this.ctx.fillStyle = "#232323";
-          this.ctx.arc(
-            this.convert_x(sval),
-            this.convert_y(mval),
-            5,
-            0,
-            2 * Math.PI
-          );
-
-          this.ctx.fill();
-        }
-
-        highlight_NN(i) {
-          //find sval
-          var mval = motor_array[i];
-          var sval = sensor_array[i];
-
-          console.log(motor_array);
-          console.log(sensor_array);
-          console.log(i);
+        highlightDelete(i) {
+          var mval = motorArray[i];
+          var sval = sensorArray[i];
 
           //highlight that point
           this.ctx.beginPath();
           this.ctx.arc(
-            this.convert_x(sval),
-            this.convert_y(mval),
+            this.convertX(sval),
+            this.convertY(mval),
             10, //radius
             0,
             2 * Math.PI
@@ -530,454 +762,471 @@
           this.ctx.stroke();
         }
 
-        draw_slider() {
-          var value = this.last_motor_val;
-          var handleY = this.convert_y(value);
-          var handleX = this.convert_x(0);
-          var handleRadius = 12;
+        convertX(x) {
+          // Assume the svals are 0-100 convert to a scale - start to bw-start
+          const cx = this.canvas.width * (x / 100);
+          return cx;
+        }
 
-          // Draw the numeric value
-          var text = value.toString();
-          this.ctx.font = "bold 15px Arial";
+        convertY(y) {
+          // Assume the svals are 0-100 convert to a scale - start to bh-start
+          const cy = (this.canvas.height * (180 - y)) / 180;
+          return cy;
+        }
+
+        drawSensorLine(sval) {
+          this.ctx.beginPath();
+          this.ctx.lineWidth = 4;
+          this.ctx.strokeStyle = "#FFD65C";
+          this.ctx.moveTo(this.convertX(sval), this.convertY(0));
+          this.ctx.lineTo(this.convertX(sval), this.convertY(180));
+          this.ctx.stroke();
+        }
+
+        drawMotorLine(mval) {
+          this.ctx.beginPath();
+          this.ctx.lineWidth = 4;
+          this.ctx.strokeStyle = "#06A5FF";
+          this.ctx.moveTo(this.convertX(0), this.convertY(mval));
+          this.ctx.lineTo(this.convertX(100), this.convertY(mval));
+          this.ctx.stroke();
+        }
+
+        drawPoint(sval, mval) {
+          //Assume the mvals are 0-180 convert to a scale - start+bh to star
+          this.ctx.beginPath();
           this.ctx.fillStyle = "#232323";
-          var textWidth = this.ctx.measureText(text).width;
-          // alignment of text
-          var textX = handleX - handleRadius - textWidth - 2;
-          var textY = handleY + handleRadius / 2;
-          this.ctx.fillText(text, textX, textY);
-
-          if (explore_mode) {
-            //draw a track
-            this.ctx.fillStyle = "#232323";
-            var trackWidth = handleRadius / 3;
-            // x, y, width, height
-            this.ctx.fillRect(
-              this.convert_x(0) - trackWidth / 2,
-              this.convert_y(180),
-              trackWidth,
-              this.convert_y(0) - this.convert_y(180)
-            );
-
-            //draw start and end labels
-            this.ctx.font = "15px Arial";
-            this.ctx.fillStyle = "#232323";
-            this.ctx.fillText("0", this.convert_x(0) - 5, 320);
-            // vertical axis
-            this.ctx.fillText("180", this.convert_x(0) - 15, 35);
-          }
-
-          if (!play_mode) {
-            // Draw the slider handle
-            this.ctx.save();
-            this.ctx.shadowColor = "#50232323";
-            this.ctx.shadowBlur = 15;
-            this.ctx.fillStyle = "#06A5FF";
-            this.ctx.beginPath();
-            this.ctx.arc(handleX, handleY, handleRadius, 0, 2 * Math.PI);
-            this.ctx.fill();
-            this.ctx.restore();
-          }
-        }
-      }
-
-      //initialize the graph with a motor position of 90
-      var c = document.getElementById("myCanvas");
-      g = new Graph(c);
-
-      // //move the motor to 90 degrees to start
-      // var xhr = new XMLHttpRequest();
-      // xhr.open("GET", "/slider?value=" + 90, true);
-      // xhr.send();
-
-      //mouse tracking variables
-      var mouseDragging = false;
-      var startY;
-      var startValue;
-      var play_mode = false;
-      var explore_mode = false;
-      var train_mode = false;
-
-      // Tabs
-      function openPage(pageName, elmnt, color) {
-        var elem = document.getElementById("heading");
-        var i, tabcontent, tablinks;
-        tabcontent = document.getElementsByClassName("tabcontent");
-        for (i = 0; i < tabcontent.length; i++) {
-          tabcontent[i].style.display = "none";
-        }
-        tablinks = document.getElementsByClassName("tablink");
-        for (i = 0; i < tablinks.length; i++) {
-          tablinks[i].style.backgroundColor = "";
-        }
-        document.getElementById(pageName).style.display = "block";
-        elmnt.style.backgroundColor = color;
-
-        // displaying the motor and light sensor only when on exploration or training mode
-        if (pageName == "train" || pageName == "explore") {
-          document.getElementById("light_sensor").style.display = "block";
-          document.getElementById("my_graph").style.display = "block";
-          document.getElementById("myTable").classList.remove("hideDelete");
-        }
-        if (pageName == "explore") {
-          document.getElementById("motor_label").style.display = "block";
-          stop();
-          explore_mode = true;
-          play_mode = false;
-          train_mode = false;
-        }
-
-        // displaying the buttons when on training mode
-        if (pageName == "train") {
-          document.getElementById("motor_label").style.display = "none";
-          stop();
-          document.getElementById("train_test_button").style.display = "block";
-          document.getElementById("tableeee").style.display = "block";
-          train_mode = true;
-          play_mode = false;
-          explore_mode = false;
-        }
-
-        if (pageName == "play") {
-          document.getElementById("motor_label").style.display = "none";
-          document.getElementById("light_sensor").style.display = "block";
-          document.getElementById("tableeee").style.display = "block";
-          document.getElementById("my_graph").style.display = "block";
-          document.getElementById("myTable").classList.add("hideDelete");
-          play_mode = true;
-          train_mode = false;
-          explore_mode = false;
-        }
-
-        //redraw the graph
-        g.redraw(-1);
-      }
-
-      // Get the element with id="defaultOpen" and click on it
-      document.getElementById("defaultOpen").click();
-
-      // upDateProgressBar takes in progressBar container and updates the display of progress bar given a value
-      function updateProgressBar(progressBar, value) {
-        progressBar.querySelector(".progress__fill").style.width = `${value}%`;
-        progressBar.querySelector(".progress__text").textContent = `${value}%`;
-      }
-      const myProgressBar = document.querySelector(".progress");
-
-      // set the value of the gauge
-      function setGaugeValue(gauge, value) {
-        if (value < 0 || value > 1) {
-          return;
-        }
-        gauge.querySelector(".gauge__fill").style.transform = `rotate(${
-          value / 2
-        }turn)`;
-        /*         gauge.querySelector(".gauge__cover").textContent = `${Math.round(
-          value * 180
-        )} deg`; */
-      }
-
-      // updates slidervalue
-      function updateSliderPWM(element) {
-        var sliderValue = document.getElementById("pwmSlider").value;
-        const gaugeElement = document.querySelector(".gauge");
-        setGaugeValue(gaugeElement, sliderValue / 180);
-        console.log(sliderValue);
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "/slider?value=" + sliderValue, true);
-        xhr.send();
-        g.update_motor_val(Number(sliderValue));
-        g.redraw();
-      }
-      const gaugeElement = document.querySelector(".gauge");
-      setGaugeValue(gaugeElement, 0.5);
-
-      // Get stored file sensor and motor pairs
-      function loadDoc() {
-        const xhttp = new XMLHttpRequest();
-        xhttp.onload = function () {
-          if (this.responseText.length > 1) {
-            var resultArray = this.responseText.split(";");
-
-            let i = 0;
-            console.log(resultArray.length);
-            console.log(resultArray);
-            while (i < resultArray.length - 1) {
-              var val = resultArray[i];
-              var val_split = val.split(",");
-              addvalue(true, val_split[0], val_split[1]);
-              console.log("motor and sensor");
-              console.log(val_split[0]);
-              console.log(val_split[1]);
-              //g.update_motor_val(Number(val_split[0]));
-              //g.update_sensor_val(Number(val_split[1]));
-              i++;
-            }
-          }
-        };
-        xhttp.open("GET", "onLoad");
-        xhttp.send();
-      }
-
-      // only sends request to retrieve data from trainData.txt once
-      loadDoc();
-
-      // update the light sensor reading
-      var ajaxRequest = new XMLHttpRequest();
-
-      function ajaxLoad(ajaxURL) {
-        var NN;
-
-        ajaxRequest.open("GET", ajaxURL, true);
-        ajaxRequest.onreadystatechange = function () {
-          if (ajaxRequest.readyState == 4 && ajaxRequest.status == 200) {
-            var ajaxResult = ajaxRequest.responseText;
-            var tmpArray = ajaxResult.split("|");
-            document.getElementById("temp").innerHTML = tmpArray[0];
-            if (tmpArray[1] != "-1") {
-              g.update_motor_val(Number(tmpArray[1]));
-              const gaugeElement = document.querySelector(".gauge");
-              setGaugeValue(gaugeElement, g.last_motor_val / 180);
-            }
-            if (tmpArray[2] != "-1") {
-              NN = Number(tmpArray[2]);
-            }
-            updateProgressBar(myProgressBar, parseInt(ajaxResult));
-            g.update_sensor_val(Number(tmpArray[0]));
-            g.redraw(NN);
-          }
-        };
-        ajaxRequest.send();
-      }
-
-      function updateDHT() {
-        ajaxLoad("getDHT");
-      }
-      // Controls how often the sensor is read
-      setInterval(updateDHT, 250);
-
-      var c = document.getElementById("myCanvas");
-
-      // only enable this in play mode
-      c.addEventListener("mousedown", function (e) {
-        if (!play_mode) {
-          //update variables to start dragging
-          mouseDragging = true;
-          startY = e.clientY;
-
-          // set starting value
-          startValue = g.last_motor_val;
-        }
-      });
-
-      // for touch screens
-      c.addEventListener("touchstart", function (e) {
-        if (!play_mode) {
-          //prevent default interactive behavior
-          e.preventDefault();
-          const touch = e.touches[0];
-          //update variables to start dragging
-          mouseDragging = true;
-          startY = touch.clientY;
-
-          // set starting value
-          startValue = g.last_motor_val;
-        }
-      });
-
-      window.addEventListener("mouseup", function (e) {
-        if (mouseDragging && !play_mode) {
-          mouseDragging = false;
-
-          // send the motor value to main.py to move the motor
-          var xhr = new XMLHttpRequest();
-          xhr.open("GET", "/slider?value=" + g.last_motor_val, true);
-          xhr.send();
-        }
-      });
-
-      // for touch screens
-      window.addEventListener("touchend", function (e) {
-        if (mouseDragging && !play_mode) {
-          e.preventDefault();
-
-          mouseDragging = false;
-
-          // send the motor value to main.py to move the motor
-          var xhr = new XMLHttpRequest();
-          xhr.open("GET", "/slider?value=" + g.last_motor_val, true);
-          xhr.send();
-        }
-      });
-
-      c.addEventListener("mousemove", function (e) {
-        if (mouseDragging && !play_mode) {
-          // how many pixels the mouse moved
-          var deltaY = startY - e.clientY;
-          console.log("deltaY: " + deltaY);
-
-          //var rectangle_height = c.getBoundingClientRect().height;
-          var rectangle_height = g.bh - g.start * 2;
-          console.log("rectangle height: " + rectangle_height);
-          console.log("start value: " + startValue);
-
-          // Update the value based on the change
-          var value = (deltaY / rectangle_height) * 180 + startValue;
-          console.log("value: " + value);
-
-          // account for the mouse being above or below the graph
-          value = Math.round(Math.max(0, Math.min(180, value)));
-          console.log("rounded value: " + value);
-
-          // Calls update_motor_val
-          g.update_motor_val(value);
-
-          // Calls redraw()
-          g.redraw(-1);
-          const gaugeElement = document.querySelector(".gauge");
-          setGaugeValue(gaugeElement, g.last_motor_val / 180);
-          console.log("gauge rotation is ");
-          console.log(g.last_motor_val);
-        }
-      });
-
-      //for touch screens
-      c.addEventListener("touchmove", function (e) {
-        if (mouseDragging && !play_mode) {
-          e.preventDefault();
-          // how many pixels the mouse moved
-          const touch = e.touches[0];
-          var deltaY = startY - touch.clientY;
-          console.log("deltaY: " + deltaY);
-
-          //var rectangle_height = c.getBoundingClientRect().height;
-          var rectangle_height = g.bh - g.start * 2;
-          console.log("rectangle height: " + rectangle_height);
-          console.log("start value: " + startValue);
-
-          // Update the value based on the change
-          var value = (deltaY / rectangle_height) * 180 + startValue;
-          console.log("value: " + value);
-
-          // account for the mouse being above or below the graph
-          value = Math.round(Math.max(0, Math.min(180, value)));
-          console.log("rounded value: " + value);
-
-          // Calls update_motor_val
-          g.update_motor_val(value);
-
-          // Calls redraw()
-          g.redraw(-1);
-        }
-      });
-
-      // add a row to the table
-      function addvalue(firstPageLoad, motor, sensor) {
-        if (firstPageLoad) {
-          // set motor value reading
-          var sliderValue = motor;
-          // set sensor reading
-          var sensorValue = sensor;
-        } else {
-          // get slider value reading
-          //var sliderValue = document.getElementById("pwmSlider").value;
-          // get slider value reading
-          var sliderValue = g.last_motor_val;
-          // get sensor reading
-          var sensorValue = document.getElementById("temp").innerHTML;
-
-          var xhttp = new XMLHttpRequest();
-          xhttp.open(
-            "GET",
-            "/?addvalue=" + sliderValue + "=" + sensorValue,
-            true
+          this.ctx.arc(
+            this.convertX(sval),
+            this.convertY(mval),
+            5,
+            0,
+            2 * Math.PI
           );
-          xhttp.send();
+
+          this.ctx.fill();
         }
 
-        // Get the table body element in which you want to add row
-        let table = document.getElementById("tableBody");
+        highlightNN(i) {
+          //find sval
+          var mval = motorArray[i];
+          var sval = sensorArray[i];
 
-        // Create row element
-        let row = document.createElement("tr");
+          //highlight that point
+          this.ctx.beginPath();
+          this.ctx.arc(
+            this.convertX(sval),
+            this.convertY(mval),
+            10, //radius
+            0,
+            2 * Math.PI
+          );
 
-        // Create cells
-        let c1 = document.createElement("td");
-        let c2 = document.createElement("td");
-        let c3 = document.createElement("td");
-        let delete_button = document.createElement("input");
-        delete_button.setAttribute("type", "button");
-        delete_button.setAttribute("value", "x");
-        delete_button.setAttribute("onclick", "deletevalue(this)");
-        delete_button.setAttribute("class", "deletebutton");
-
-        sensor_array.push(Number(sensorValue));
-        motor_array.push(Number(sliderValue));
-
-        console.log("Sensor Array", sensor_array);
-        console.log("Motor Array", motor_array);
-
-        // Insert data to cells
-        c1.innerText = sensorValue;
-        c2.innerText = sliderValue;
-
-        // Append cells to row
-        row.appendChild(c1);
-        row.appendChild(c2);
-        row.appendChild(c3);
-        c3.appendChild(delete_button);
-
-        // Append row to table body
-        table.appendChild(row);
-
-        // Add point to graph
-        g.redraw(-1);
-      }
-
-      function deletevalue(r) {
-        var table = document.getElementById("myTable");
-        var rowCount = table.rows.length;
-        console.log(rowCount);
-
-        if (rowCount > 1) {
-          var i = r.parentNode.parentNode.rowIndex;
-          console.log(i);
-
-          table.deleteRow(i);
-
-          var xhttp = new XMLHttpRequest();
-
-          xhttp.open("GET", "/?deletevalue=" + (i - 1), true);
-          console.log(i - 1);
-          xhttp.send();
-          sensor_array.splice(i - 1, 1);
-          motor_array.splice(i - 1, 1);
-          g.redraw(-1);
+          this.ctx.strokeStyle = "#232323";
+          this.ctx.stroke();
         }
       }
 
-      function test() {
-        var button_text = document.getElementById("toggle_play").innerHTML;
-        if (button_text == "Play!") {
-          document.getElementById("toggle_play").innerHTML = "Stop!";
-          document.getElementById("toggle_play").style.backgroundColor =
-            "#FF5151";
-          var xhttp = new XMLHttpRequest();
-          xhttp.open("GET", "/?test", true);
-          xhttp.send();
-          TEST = true;
+      //initialize the graph
+      const trainCanvas = document.querySelector("#train-canvas-graph");
+      const playCanvas = document.querySelector("#play-canvas-graph");
+
+      trainGraph = new Graph(trainCanvas);
+      playGraph = new Graph(playCanvas);
+
+      trainGraph.redraw(-1);
+      playGraph.redraw(-1);
+
+      //hide and show the div for each page when the user clicks on tabs
+      function changePage(pageName) {
+        resizeCanvas();
+        console.log("change page");
+        if (pageName == "explore") {
+          document.getElementById("explore-page").style.display = "block";
+          document.getElementById("train-page").style.display = "none";
+          document.getElementById("play-page").style.display = "none";
+
+          document.getElementById("train-tab").style.backgroundColor = "";
+          document.getElementById("play-tab").style.backgroundColor = "";
+          document.getElementById("explore-tab").style.backgroundColor =
+            "#06A5FF";
+          status = "e";
+          stop();
+        } else if (pageName == "train") {
+          document.getElementById("explore-page").style.display = "none";
+          document.getElementById("train-page").style.display = "block";
+          document.getElementById("play-page").style.display = "none";
+
+          document.getElementById("explore-tab").style.backgroundColor = "";
+          document.getElementById("play-tab").style.backgroundColor = "";
+          document.getElementById("train-tab").style.backgroundColor =
+            "#C387FF";
+          status = "t";
+          stop();
+        } else {
+          document.getElementById("explore-page").style.display = "none";
+          document.getElementById("train-page").style.display = "none";
+          document.getElementById("play-page").style.display = "block";
+
+          document.getElementById("explore-tab").style.backgroundColor = "";
+          document.getElementById("train-tab").style.backgroundColor = "";
+          document.getElementById("play-tab").style.backgroundColor = "#4ACB67";
+          status = "p";
+          stop();
+        }
+
+        updateMotorValLabel();
+      }
+
+      //change size of canvas
+      window.onresize = function () {
+        resizeCanvas();
+        updateMotorValLabel();
+      };
+
+      function resizeCanvas() {
+        const canvases = document.querySelectorAll(".canvas-graph");
+        if (window.innerWidth > window.innerHeight) {
+          // breakpoint: designed for landscape
+          canvases.forEach(
+            (element) => (element.width = 0.2 * window.innerWidth)
+          );
+        } else if (window.innerWidth < window.innerHeight) {
+          // breakpoint: designed portrait
+          canvases.forEach(
+            (element) => (element.width = 0.4 * window.innerWidth)
+          );
+        }
+
+        //set the height based on the aspect ratio
+        canvases.forEach(
+          (element) => (element.height = 2 * (element.width / 3))
+        );
+
+        trainGraph.redraw(-1);
+        playGraph.redraw(-1);
+      }
+
+      //change the dichotomy labels based on the selected sensor
+      function selectSensor() {
+        const sensorName = document.querySelector(".sensor-selector").value;
+        const lowLabels = document.querySelectorAll(".sensor-low");
+        const highLabels = document.querySelectorAll(".sensor-high");
+        const icon = document.querySelector(".sensor-icon");
+        const cIcons = document.querySelectorAll(".clockwise-icon");
+        const ccIcons = document.querySelectorAll(".counter-clockwise-icon");
+        if (sensorName == "light") {
+          lowLabels.forEach((element) => (element.innerHTML = "Dark"));
+          highLabels.forEach((element) => (element.innerHTML = "Light"));
+          icon.setAttribute("src", "light_icon.png");
+        } else if (sensorName == "distance") {
+          lowLabels.forEach((element) => (element.innerHTML = "Far"));
+          highLabels.forEach((element) => (element.innerHTML = "Close"));
+          icon.setAttribute("src", "distance_icon.png");
+        } else if (sensorName == "dial") {
+          lowLabels.forEach((element) => (element.innerHTML = ""));
+          highLabels.forEach((element) => (element.innerHTML = ""));
+          icon.setAttribute("src", "dial_icon.png");
+        } else if (sensorName == "slider") {
+          lowLabels.forEach((element) => (element.innerHTML = "Left"));
+          highLabels.forEach((element) => (element.innerHTML = "Right"));
+          icon.setAttribute("src", "slider_icon.png");
+        } else {
+          lowLabels.forEach((element) => (element.innerHTML = ""));
+          highLabels.forEach((element) => (element.innerHTML = ""));
+          icon.setAttribute("src", "");
+        }
+
+        if (sensorName == "dial") {
+          cIcons.forEach((element) => (element.style.display = "block"));
+          ccIcons.forEach((element) => (element.style.display = "block"));
+          cIcons.forEach((element) =>
+            element.setAttribute("src", "clockwise_icon.png")
+          );
+          ccIcons.forEach((element) =>
+            element.setAttribute("src", "counterclockwise_icon.png")
+          );
+        } else {
+          cIcons.forEach((element) => (element.style.display = "none"));
+          ccIcons.forEach((element) => (element.style.display = "none"));
+        }
+      }
+
+      //called when the user moves the motor slider
+      function moveMotor(val) {
+        //update both sliders with this value
+        const sliders = document.querySelectorAll(".motor-slider");
+        sliders.forEach((element) => (element.value = val));
+
+        //update the gauge position
+        const gauges = document.querySelectorAll(".gauge-fill");
+        gauges.forEach(
+          (element) => (element.style.transform = `rotate(${val / 360}turn)`)
+        );
+
+        updateMotorValLabel();
+
+        //update the graph position
+        trainGraph.updateMotorVal(val);
+        playGraph.updateMotorVal(val);
+
+        trainGraph.redraw(-1);
+        playGraph.redraw(-1);
+      }
+
+      function updateMotorValLabel() {
+        console.log("UPDATE MOTOR VAL LABEL");
+        //get the latest value
+        const val = document.querySelector(".motor-slider").value;
+        let gauge;
+        let label;
+
+        if (status == "e") {
+          gauge = document.querySelector("#explore-gauge");
+          label = document.querySelector("#explore-motor-value");
+        } else if (status == "t") {
+          gauge = document.querySelector("#train-gauge");
+          label = document.querySelector("#train-motor-value");
+        } else {
+          gauge = document.querySelector("#play-gauge");
+          label = document.querySelector("#play-motor-value");
+        }
+
+        //update the text
+        label.innerHTML = val;
+
+        //update the position relative to the gauge
+        var valueBottom = (val / 180) * (gauge.offsetHeight - 16);
+
+        //account for height of text
+        valueBottom = valueBottom - label.offsetHeight / 2 + 8;
+        label.style.bottom = `${valueBottom}px`;
+        valueLeft = gauge.offsetWidth + 50;
+        if (status == "p") {
+          valueLeft = valueLeft - 20;
+        }
+        label.style.left = `${valueLeft}px`;
+      }
+
+      function updateSensor(value) {
+        const sensorBarFills = document.querySelectorAll(".sensor-bar-fill");
+        const sensorBarLabels = document.querySelectorAll(".sensor-bar-text");
+        //update the progress bar
+        sensorBarFills.forEach(
+          (element) => (element.style.width = `${value}%`)
+        );
+        sensorBarLabels.forEach(
+          (element) => (element.textContent = `${value}%`)
+        );
+      }
+
+      function addValue(sensorVal, motorVal) {
+        //get the sensor and motor value from the graph if not loading data
+        if (sensorVal == -1 && motorVal == -1) {
+          motorVal = trainGraph.lastMotorVal;
+          sensorVal = trainGraph.lastSensorVal;
+          //add new data point to the python arrays
+          var dictionary = {};
+          dictionary["st"] = "t";
+          dictionary["t"] = 1;
+          dictionary["am"] = motorVal;
+          dictionary["as"] = sensorVal;
+          window.pyrepl.write = JSON.stringify(dictionary);
+          console.log("ADD VALUE JSON");
+        }
+
+        //add new data point to js arrays
+        motorArray.push(motorVal);
+        sensorArray.push(sensorVal);
+
+        //create cells with data
+        var trainc1 = document.createElement("td");
+        var playc1 = document.createElement("td");
+        var trainc2 = document.createElement("td");
+        var playc2 = document.createElement("td");
+        trainc1.innerText = sensorVal;
+        playc1.innerText = sensorVal;
+        trainc2.innerText = motorVal;
+        playc2.innerText = motorVal;
+
+        //create a delete button for the row
+        var deleteButton = document.createElement("button");
+        deleteButton.setAttribute("id", "delete");
+        deleteButton.setAttribute("class", "button");
+        deleteButton.innerHTML = "x";
+        deleteButton.setAttribute("onclick", "deleteValue(this)");
+        deleteButton.addEventListener("mouseover", function () {
+          hoverDelete(true, this);
+        });
+        deleteButton.addEventListener("mouseout", function () {
+          hoverDelete(false, this);
+        });
+
+        //make a cell with the delete button
+        var c3 = document.createElement("td");
+        c3.appendChild(deleteButton);
+
+        //append the cells to the row and the row to the table
+        var deletableRow = document.createElement("tr");
+        deletableRow.appendChild(trainc1);
+        deletableRow.appendChild(trainc2);
+        deletableRow.appendChild(c3);
+        document.querySelector("#train-table").appendChild(deletableRow);
+
+        var row = document.createElement("tr");
+        row.appendChild(playc1);
+        row.appendChild(playc2);
+
+        document.querySelector("#play-table").appendChild(row);
+
+        //redraw the graphs
+        trainGraph.redraw(-1);
+        playGraph.redraw(-1);
+      }
+
+      function deleteValue(deleteButton) {
+        //get the row from the delete button
+        var row = deleteButton.parentNode.parentNode.rowIndex;
+        var tables = document.querySelectorAll("table");
+        tables.forEach((table) => table.deleteRow(row));
+        console.log("row deleted index");
+        console.log(row);
+
+        //subtract 1 to account for the header
+        var i = row - 1;
+
+        //delete value in arrays
+        sensorArray.splice(i, 1);
+        motorArray.splice(i, 1);
+        trainGraph.redraw(-1);
+        playGraph.redraw(-1);
+
+        console.log("delete index");
+        console.log(i);
+
+        //delete data point from python arrays
+
+        var dictionary = {};
+        dictionary["st"] = "t";
+        dictionary["t"] = 1;
+        dictionary["di"] = i; //delete index
+        window.pyrepl.write = JSON.stringify(dictionary);
+
+        //stop highlighting the point that is deleted
+        hoverDeleteIndex = -1;
+      }
+
+      function loadData() {
+        //request the loaded data
+        var dictionary = {};
+        dictionary["st"] = "l";
+        window.pyrepl.write = JSON.stringify(dictionary);
+
+        //read in the loaded data
+        var received = window.pyrepl.read;
+        var lastReceived = received[received.length - 1];
+        if (lastReceived[0] == "{") {
+          //parse JSON to find the motor and sensor array
+          for (var i = 0; i < received.length; i++) {
+            if (received[i][2] == "m") {
+              lastReceived = received[i];
+            }
+          }
+          console.log(lastReceived);
+          var lastJSON = JSON.parse(lastReceived);
+          var motorVals = lastJSON.m;
+          console.log(motorVals);
+          var sensorVals = lastJSON.s;
+          console.log(sensorVals);
+          for (var i = 0; i < motorVals.length; i++) {
+            addValue(sensorVals[i], motorVals[i]);
+          }
+        } else {
+          setTimeout(loadData, 250);
+        }
+      }
+
+      function startStop() {
+        const button = document.getElementById("start");
+        if (button.value == "Start") {
+          var dictionary = {};
+          dictionary["st"] = "p";
+          dictionary["r"] = 1;
+          window.pyrepl.write = JSON.stringify(dictionary);
+
+          //change the button text and color
+          button.value = "Stop";
+          button.style.backgroundColor = "#FF5151";
         } else {
           stop();
         }
       }
 
       function stop() {
-        document.getElementById("toggle_play").innerHTML = "Play!";
-        document.getElementById("toggle_play").style.backgroundColor =
-          "#4ACB67";
-        var xhttp = new XMLHttpRequest();
-        xhttp.open("GET", "/?stop", true);
-        xhttp.send();
-        TEST = false;
+        const button = document.getElementById("start");
+        var dictionary = {};
+        dictionary["st"] = status;
+        dictionary["r"] = 0;
+        window.pyrepl.write = JSON.stringify(dictionary);
+
+        //change the button text and color
+        button.value = "Start";
+        button.style.backgroundColor = "#4ACB67";
       }
+
+      function setupSerial() {
+        if (window.pyrepl && window.pyrepl.isActive) {
+          console.log("DEVICE CONNECTED: about to reboot");
+          window.pyrepl.reboot;
+          console.log("before load data");
+          loadData();
+          console.log("after load data");
+          setInterval(runSerial, 150); // connected, start monitoring
+        } else {
+          setTimeout(setupSerial, 250);
+        }
+      }
+
+      function runSerial() {
+        // should already be connected, but lets double cehck
+        if (window.pyrepl && window.pyrepl.isActive) {
+          var val = document.querySelector(".motor-slider").value;
+
+          var dictionary = {};
+          dictionary["m"] = val;
+          dictionary["st"] = status;
+          window.pyrepl.write = JSON.stringify(dictionary);
+
+          var received = window.pyrepl.read;
+          //get the last line of the serial reading
+          var lastReceived = received[received.length - 1];
+          var lastJSON = JSON.parse(lastReceived);
+          var sensorVal = Math.round(lastJSON.s);
+
+          //update sensor value on progress bar
+          updateSensor(sensorVal);
+
+          //update sensor value on graph
+          trainGraph.updateSensorVal(sensorVal);
+          playGraph.updateSensorVal(sensorVal);
+
+          //if in play/start mode
+          if (lastJSON.hasOwnProperty("m") && lastJSON.hasOwnProperty("i")) {
+            //go to motor value
+            moveMotor(lastJSON.m);
+            //highlight nearest neighbor
+            playGraph.redraw(lastJSON.i);
+          } else {
+            trainGraph.redraw(-1);
+            playGraph.redraw(-1);
+          }
+        }
+      }
+
+      //functions that run on website load
+      resizeCanvas();
+      updateMotorValLabel();
+      changePage("explore");
     </script>
   </body>
 </html>
