@@ -314,7 +314,7 @@
 
       .clockwise-icon,
       .counter-clockwise-icon {
-        display: inline;
+        display: none;
         height: 35px;
         aspect-ratio: 1/1;
       }
@@ -674,7 +674,10 @@
           </div>
           <h2 id="train-sensor-label" class="sensor-label">Sensor</h2>
           <p id="train-sensor-high" class="sensor-high"></p>
-          <img id="grid-clockwise-icon" id="counter-clockwise-icon" />
+          <img
+            id="grid-counter-clockwise-icon"
+            class="counter-clockwise-icon"
+          />
         </div>
         <div class="training-values">
           <div class="dividing-line"></div>
