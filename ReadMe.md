@@ -20,7 +20,7 @@ Smart Motor firmware:
 - `smarttools.py` - Display and UI utilities for the OLED screen
 - `ssd1306.py` - OLED display library
 
-Smart App interface:
+[Smart App interface:](https://smart-motors.web.app/) 
 - `index.html` - Smart App web interface for motor training and visualization
 - `trainData.txt` - Storage for motor training data points
 
